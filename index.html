@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sacred Geometry Encoder/Decoder</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: #ffffff;
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: #000000;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 2px solid #000000;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            color: #000000;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #ffffff;
+            border-radius: 10px;
+            border: 1px solid #000000;
+        }
+        
+        .section h2 {
+            margin-top: 0;
+            color: #000000;
+            font-size: 1.5em;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        input[type="text"], input[type="number"], textarea {
+            flex: 1;
+            min-width: 200px;
+            padding: 12px;
+            border: 2px solid #000000;
+            border-radius: 4px;
+            background: #ffffff;
+            color: #000000;
+            font-size: 16px;
+        }
+        
+        button {
+            background: #000000;
+            color: #ffffff;
+            border: 2px solid #000000;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: background 0.2s, color 0.2s;
+        }
+        
+        button:hover {
+            background: #ffffff;
+            color: #000000;
+        }
+        
+        button:disabled {
+            background: #666666;
+            color: #ffffff;
+            border-color: #666666;
+            cursor: not-allowed;
+        }
+        
+        #svgOutput {
+            border: 2px solid #000000;
+            border-radius: 4px;
+            background: white;
+            margin: 10px 0;
+            max-width: 100%;
+        }
+        
+        #cameraFeed {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 10px;
+            background: #000;
+        }
+        
+        .canvas-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        
+        .download-btn {
+            background: #ffffff;
+            color: #000000;
+            border: 2px solid #000000;
+            margin-left: 10px;
+        }
+        
+        .download-btn:hover {
+            background: #000000;
+            color: #ffffff;
+        }
+        
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            font-weight: bold;
+            border: 2px solid #000000;
+        }
+        
+        .success {
+            background: #ffffff;
+            color: #000000;
+        }
+        
+        .error {
+            background: #ffffff;
+            color: #000000;
+        }
+        
+        .info {
+            background: #ffffff;
+            color: #000000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Sacred Geometry Encoder ✨</h1>
+        
+        <div class="section">
+            <h2>🔮 Encode Information</h2>
+            <div class="input-group">
+                <input type="text" id="textInput" placeholder="Enter text to encode (max 100 chars)" maxlength="100">
+                <input type="number" id="sizeInput" value="400" min="200" max="800" placeholder="Size">
+                <button onclick="encodeText()">Encode</button>
+            </div>
+            <div class="canvas-container">
+                <div id="svgOutput"></div>
+                <br>
+                <button onclick="downloadSVG()" class="download-btn">Download Sacred Symbol (SVG)</button>
+            </div>
+            <div id="encodeStatus"></div>
+        </div>
+        
+        <div class="section">
+            <h2>📱 Decode with Camera</h2>
+            <button id="startCamera" onclick="startCamera()">Start Camera</button>
+            <button id="stopCamera" onclick="stopCamera()" disabled>Stop Camera</button>
+            <br><br>
+            <video id="cameraFeed" autoplay playsinline></video>
+            <canvas id="decodingCanvas" width="400" height="400" style="display: none;"></canvas>
+            <div id="decodeStatus"></div>
+            <div id="decodedResult"></div>
+        </div>
+        
+        <div class="section">
+            <h2>🖼️ Decode from Image File</h2>
+            <input type="file" id="imageFile" accept="image/*" onchange="decodeFromFile()">
+            <div class="canvas-container">
+                <canvas id="decodedCanvas" width="400" height="400" style="border: 2px solid #000000; border-radius: 4px;"></canvas>
+            </div>
+        </div>
+        
+        <div class="info">
+            <strong>How it works:</strong> Information is encoded in concentric circles using rotational patterns. Each ring represents data bits, creating beautiful sacred geometry while storing your message.
+        </div>
+    </div>
+
+    <script>
+        let stream = null;
+        let scanning = false;
+        
+        // Sacred geometry SVG encoding system
+        class SacredGeometryEncoder {
+            constructor(size = 400) {
+                this.size = size;
+                this.center = size / 2;
+                this.maxRings = 8; // Maximum number of data rings
+                this.bitsPerRing = 12; // 12 segments per ring
+                this.maxDataBits = this.maxRings * this.bitsPerRing; // 96 bits max
+            }
+            
+            textToBits(text) {
+                let bits = '';
+                // Add length header (8 bits)
+                const length = Math.min(text.length, 255);
+                bits += length.toString(2).padStart(8, '0');
+                
+                // Add text data
+                for (let i = 0; i < length; i++) {
+                    bits += text.charCodeAt(i).toString(2).padStart(8, '0');
+                }
+                
+                // Pad to fit our capacity
+                while (bits.length < this.maxDataBits) {
+                    bits += '0';
+                }
+                
+                return bits.substring(0, this.maxDataBits);
+            }
+            
+            bitsToText(bits) {
+                try {
+                    const length = parseInt(bits.substring(0, 8), 2);
+                    if (length === 0 || length > 100) return null;
+                    
+                    let text = '';
+                    for (let i = 0; i < length; i++) {
+                        const start = 8 + (i * 8);
+                        const charCode = parseInt(bits.substring(start, start + 8), 2);
+                        if (charCode === 0) break;
+                        text += String.fromCharCode(charCode);
+                    }
+                    return text;
+                } catch (e) {
+                    return null;
+                }
+            }
+            
+            encodeSVG(text) {
+                const bits = this.textToBits(text);
+                let svgElements = [];
+                
+                // Create SVG container
+                svgElements.push(`<svg width="${this.size}" height="${this.size}" xmlns="http://www.w3.org/2000/svg">`);
+                
+                // White background
+                svgElements.push(`<rect width="${this.size}" height="${this.size}" fill="white" stroke="black" stroke-width="2"/>`);
+                
+                // Outer decorative circle
+                svgElements.push(`<circle cx="${this.center}" cy="${this.center}" r="${this.center - 10}" fill="none" stroke="black" stroke-width="3"/>`);
+                
+                // Draw flower of life pattern in background
+                const petalRadius = 30;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI) / 3;
+                    const x = this.center + Math.cos(angle) * 40;
+                    const y = this.center + Math.sin(angle) * 40;
+                    svgElements.push(`<circle cx="${x}" cy="${y}" r="${petalRadius}" fill="none" stroke="black" stroke-width="1" opacity="0.2"/>`);
+                }
+                
+                // Draw data rings
+                for (let ring = 0; ring < this.maxRings; ring++) {
+                    const radius = this.center - 30 - (ring * 25);
+                    if (radius < 30) break;
+                    
+                    for (let segment = 0; segment < this.bitsPerRing; segment++) {
+                        const bitIndex = ring * this.bitsPerRing + segment;
+                        const bit = bits[bitIndex] || '0';
+                        
+                        const startAngle = (segment / this.bitsPerRing) * 360;
+                        const endAngle = ((segment + 1) / this.bitsPerRing) * 360;
+                        
+                        const x1 = this.center + Math.cos((startAngle * Math.PI) / 180) * radius;
+                        const y1 = this.center + Math.sin((startAngle * Math.PI) / 180) * radius;
+                        const x2 = this.center + Math.cos((endAngle * Math.PI) / 180) * radius;
+                        const y2 = this.center + Math.sin((endAngle * Math.PI) / 180) * radius;
+                        
+                        const largeArcFlag = (endAngle - startAngle) > 180 ? 1 : 0;
+                        
+                        const color = bit === '1' ? 'black' : 'white';
+                        const strokeColor = bit === '1' ? 'black' : '#cccccc';
+                        
+                        svgElements.push(`<path d="M ${this.center} ${this.center} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z" fill="${color}" stroke="${strokeColor}" stroke-width="1"/>`);
+                    }
+                }
+                
+                // Center mandala
+                svgElements.push(`<circle cx="${this.center}" cy="${this.center}" r="20" fill="black"/>`);
+                
+                // Inner star
+                let starPath = '';
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i * Math.PI) / 4;
+                    const x = this.center + Math.cos(angle) * 12;
+                    const y = this.center + Math.sin(angle) * 12;
+                    if (i === 0) starPath += `M ${x} ${y}`;
+                    else starPath += ` L ${x} ${y}`;
+                }
+                starPath += ' Z';
+                svgElements.push(`<path d="${starPath}" fill="white"/>`);
+                
+                svgElements.push('</svg>');
+                return svgElements.join('\n');
+            }
+            
+            encode(text, canvas) {
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'white';
+                ctx.fillRect(0, 0, this.size, this.size);
+                
+                const bits = this.textToBits(text);
+                
+                // Draw outer decorative circle
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(this.center, this.center, this.center - 10, 0, 2 * Math.PI);
+                ctx.stroke();
+                
+                // Draw inner decorative elements
+                this.drawSacredElements(ctx);
+                
+                // Draw data rings
+                for (let ring = 0; ring < this.maxRings; ring++) {
+                    const radius = this.center - 30 - (ring * 25);
+                    if (radius < 30) break;
+                    
+                    for (let segment = 0; segment < this.bitsPerRing; segment++) {
+                        const bitIndex = ring * this.bitsPerRing + segment;
+                        const bit = bits[bitIndex] || '0';
+                        
+                        const angle = (segment / this.bitsPerRing) * 2 * Math.PI;
+                        const nextAngle = ((segment + 1) / this.bitsPerRing) * 2 * Math.PI;
+                        
+                        ctx.beginPath();
+                        ctx.arc(this.center, this.center, radius, angle, nextAngle);
+                        ctx.lineWidth = 15;
+                        ctx.strokeStyle = bit === '1' ? 'black' : '#cccccc';
+                        ctx.stroke();
+                    }
+                }
+                
+                // Center mandala
+                this.drawCenterMandala(ctx);
+            }
+            
+            drawSacredElements(ctx) {
+                // Draw flower of life pattern in background
+                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+                ctx.lineWidth = 1;
+                
+                const petalRadius = 30;
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i * Math.PI) / 3;
+                    const x = this.center + Math.cos(angle) * 40;
+                    const y = this.center + Math.sin(angle) * 40;
+                    
+                    ctx.beginPath();
+                    ctx.arc(x, y, petalRadius, 0, 2 * Math.PI);
+                    ctx.stroke();
+                }
+            }
+            
+            drawCenterMandala(ctx) {
+                // Draw center sacred symbol
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(this.center, this.center, 20, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Draw inner star
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                for (let i = 0; i < 8; i++) {
+                    const angle = (i * Math.PI) / 4;
+                    const x = this.center + Math.cos(angle) * 12;
+                    const y = this.center + Math.sin(angle) * 12;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
+            
+            decode(canvas) {
+                const ctx = canvas.getContext('2d');
+                const imageData = ctx.getImageData(0, 0, this.size, this.size);
+                const data = imageData.data;
+                
+                let bits = '';
+                
+                // Sample each ring and segment
+                for (let ring = 0; ring < this.maxRings; ring++) {
+                    const radius = this.center - 30 - (ring * 25);
+                    if (radius < 30) break;
+                    
+                    for (let segment = 0; segment < this.bitsPerRing; segment++) {
+                        const angle = (segment + 0.5) / this.bitsPerRing * 2 * Math.PI;
+                        const x = Math.round(this.center + Math.cos(angle) * radius);
+                        const y = Math.round(this.center + Math.sin(angle) * radius);
+                        
+                        if (x >= 0 && x < this.size && y >= 0 && y < this.size) {
+                            const pixelIndex = (y * this.size + x) * 4;
+                            const r = data[pixelIndex];
+                            const g = data[pixelIndex + 1];
+                            const b = data[pixelIndex + 2];
+                            
+                            // Check if pixel is dark (data bit) or light (no data)
+                            const brightness = (r + g + b) / 3;
+                            bits += brightness < 128 ? '1' : '0';
+                        } else {
+                            bits += '0';
+                        }
+                    }
+                }
+                
+                return this.bitsToText(bits);
+            }
+        }
+        
+        const encoder = new SacredGeometryEncoder();
+        
+        function encodeText() {
+            const text = document.getElementById('textInput').value;
+            const size = parseInt(document.getElementById('sizeInput').value) || 400;
+            
+            if (!text.trim()) {
+                showStatus('encodeStatus', 'Please enter text to encode', 'error');
+                return;
+            }
+            
+            if (text.length > 100) {
+                showStatus('encodeStatus', 'Text too long (max 100 characters)', 'error');
+                return;
+            }
+            
+            const sizedEncoder = new SacredGeometryEncoder(size);
+            const svgContent = sizedEncoder.encodeSVG(text);
+            
+            // Display SVG
+            const svgOutput = document.getElementById('svgOutput');
+            svgOutput.innerHTML = svgContent;
+            
+            // Store for download
+            window.currentSVG = svgContent;
+            
+            showStatus('encodeStatus', `Encoded "${text}" successfully!`, 'success');
+        }
+        
+        function downloadSVG() {
+            if (!window.currentSVG) {
+                alert('Please encode some text first!');
+                return;
+            }
+            
+            const blob = new Blob([window.currentSVG], { type: 'image/svg+xml' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.download = 'sacred-geometry-code.svg';
+            link.href = url;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        async function startCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    } 
+                });
+                
+                const video = document.getElementById('cameraFeed');
+                video.srcObject = stream;
+                video.play();
+                
+                document.getElementById('startCamera').disabled = true;
+                document.getElementById('stopCamera').disabled = false;
+                
+                showStatus('decodeStatus', 'Camera started. Point at a sacred geometry code...', 'info');
+                
+                // Start scanning
+                scanning = true;
+                scanFrame();
+                
+            } catch (err) {
+                showStatus('decodeStatus', 'Camera access denied or not available', 'error');
+                console.error('Camera error:', err);
+            }
+        }
+        
+        function stopCamera() {
+            scanning = false;
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+            
+            document.getElementById('startCamera').disabled = false;
+            document.getElementById('stopCamera').disabled = true;
+            document.getElementById('cameraFeed').srcObject = null;
+            
+            showStatus('decodeStatus', 'Camera stopped', 'info');
+        }
+        
+        function scanFrame() {
+            if (!scanning) return;
+            
+            const video = document.getElementById('cameraFeed');
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                const canvas = document.getElementById('decodingCanvas');
+                const ctx = canvas.getContext('2d');
+                
+                canvas.width = 400;
+                canvas.height = 400;
+                
+                // Draw video frame to canvas
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // Try to decode
+                const result = encoder.decode(canvas);
+                if (result) {
+                    document.getElementById('decodedResult').innerHTML = 
+                        `<div class="success"><strong>Decoded:</strong> ${result}</div>`;
+                    showStatus('decodeStatus', 'Successfully decoded!', 'success');
+                    // Continue scanning for more codes
+                }
+            }
+            
+            if (scanning) {
+                requestAnimationFrame(scanFrame);
+            }
+        }
+        
+        function decodeFromFile() {
+            const file = document.getElementById('imageFile').files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.getElementById('decodedCanvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = 400;
+                    canvas.height = 400;
+                    
+                    ctx.drawImage(img, 0, 0, 400, 400);
+                    
+                    const result = encoder.decode(canvas);
+                    if (result) {
+                        document.getElementById('decodedResult').innerHTML = 
+                            `<div class="success"><strong>Decoded from file:</strong> ${result}</div>`;
+                    } else {
+                        document.getElementById('decodedResult').innerHTML = 
+                            `<div class="error">Could not decode image. Make sure it's a valid sacred geometry code.</div>`;
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function showStatus(elementId, message, type) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="${type}">${message}</div>`;
+            
+            if (type === 'success' || type === 'error') {
+                setTimeout(() => {
+                    element.innerHTML = '';
+                }, 5000);
+            }
+        }
+        
+        // Initialize with example
+        window.onload = function() {
+            document.getElementById('textInput').value = 'Hello World!';
+            encodeText();
+        };
+    </script>
+</body>
+</html>
