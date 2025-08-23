@@ -24,32 +24,30 @@
             max-width: 100%;
             margin: 0 auto;
             background: #ffffff;
-            border: 2px solid #000000;
             border-radius: 8px;
             padding: 15px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
         
         h1 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
             font-size: 1.8em;
             color: #000000;
+            font-weight: 300;
         }
         
         .section {
-            margin-bottom: 25px;
-            padding: 15px;
+            margin-bottom: 40px;
+            padding: 20px 0;
             background: #ffffff;
-            border-radius: 8px;
-            border: 1px solid #000000;
         }
         
         .section h2 {
             margin-top: 0;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             color: #000000;
-            font-size: 1.3em;
+            font-size: 1.2em;
+            font-weight: 400;
         }
         
         .input-group {
@@ -68,12 +66,18 @@
         input[type="text"], input[type="number"], input[type="file"] {
             width: 100%;
             padding: 12px;
-            border: 2px solid #000000;
+            border: 1px solid #ddd;
             border-radius: 4px;
             background: #ffffff;
             color: #000000;
             font-size: 16px;
             -webkit-appearance: none;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus, input[type="number"]:focus, input[type="file"]:focus {
+            outline: none;
+            border-color: #000000;
         }
         
         input[type="number"] {
@@ -84,13 +88,13 @@
             width: 100%;
             background: #000000;
             color: #ffffff;
-            border: 2px solid #000000;
+            border: none;
             padding: 14px 20px;
             border-radius: 4px;
             cursor: pointer;
-            font-weight: bold;
+            font-weight: 500;
             font-size: 16px;
-            transition: background 0.2s, color 0.2s;
+            transition: background 0.2s, transform 0.1s;
             margin-bottom: 8px;
             -webkit-appearance: none;
             -webkit-tap-highlight-color: transparent;
@@ -104,23 +108,22 @@
         }
         
         button:hover, button:focus {
-            background: #ffffff;
-            color: #000000;
+            background: #333333;
+            transform: translateY(-1px);
             outline: none;
         }
         
         button:disabled {
-            background: #666666;
-            color: #ffffff;
-            border-color: #666666;
+            background: #cccccc;
+            color: #999999;
             cursor: not-allowed;
+            transform: none;
         }
         
         #svgOutput {
-            border: 2px solid #000000;
             border-radius: 4px;
             background: white;
-            margin: 10px 0;
+            margin: 15px 0;
             width: 100%;
             max-width: 100%;
         }
@@ -129,6 +132,7 @@
             width: 100%;
             height: auto;
             max-width: 400px;
+            border-radius: 4px;
         }
         
         #cameraFeed {
@@ -137,47 +141,50 @@
             height: auto;
             border-radius: 4px;
             background: #000;
-            border: 2px solid #000000;
         }
         
         .canvas-container {
             text-align: center;
-            margin: 15px 0;
+            margin: 20px 0;
         }
         
         .download-btn {
             background: #ffffff;
             color: #000000;
-            border: 2px solid #000000;
+            border: 1px solid #ddd;
         }
         
         .download-btn:hover {
-            background: #000000;
-            color: #ffffff;
+            background: #f5f5f5;
+            transform: translateY(-1px);
         }
         
         .status {
-            padding: 10px;
+            padding: 12px 16px;
             border-radius: 4px;
-            margin: 10px 0;
-            font-weight: bold;
-            border: 2px solid #000000;
+            margin: 15px 0;
+            font-weight: 400;
             word-break: break-word;
+            background: #f8f9fa;
+            border-left: 3px solid #ddd;
         }
         
         .success {
-            background: #ffffff;
+            background: #f8f9fa;
+            border-left-color: #000000;
             color: #000000;
         }
         
         .error {
-            background: #ffffff;
-            color: #000000;
+            background: #f8f9fa;
+            border-left-color: #dc3545;
+            color: #dc3545;
         }
         
         .info {
-            background: #ffffff;
-            color: #000000;
+            background: #f8f9fa;
+            border-left-color: #6c757d;
+            color: #6c757d;
         }
         
         .camera-controls {
@@ -195,13 +202,13 @@
         
         .decode-result {
             margin-top: 15px;
-            padding: 10px;
-            border: 2px solid #000000;
+            padding: 16px;
             border-radius: 4px;
-            background: #f9f9f9;
+            background: #f8f9fa;
             word-break: break-all;
-            font-family: monospace;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             font-size: 14px;
+            border-left: 3px solid #000000;
         }
         
         .hidden {
@@ -244,12 +251,12 @@
             <h2>🖼️ Decode from Image File</h2>
             <input type="file" id="imageFile" accept="image/*" onchange="decodeFromFile()">
             <div class="canvas-container">
-                <canvas id="decodedCanvas" width="400" height="400" style="border: 2px solid #000000; border-radius: 4px; max-width: 100%;"></canvas>
+                <canvas id="decodedCanvas" width="400" height="400" style="border-radius: 4px; max-width: 100%;"></canvas>
             </div>
         </div>
         
         <div class="info">
-            <strong>How it works:</strong> Information is encoded in concentric circles using rotational patterns. Each ring represents data bits, creating beautiful sacred geometry while storing your message.
+            <strong>Sacred Geometry Encoder:</strong> Creates beautiful minimalist patterns where information is encoded as precise geometric arrangements. Each black circle represents encoded data bits arranged in concentric rings.
         </div>
     </div>
 
@@ -445,6 +452,115 @@
         
         const encoder = new SacredGeometryEncoder();
         
+        // Function to create organic merged shapes (metaballs effect)
+        function drawMetaballCluster(ctx, positions, radius) {
+            if (positions.length === 0) return;
+            
+            // Calculate bounding box for the cluster
+            const minX = Math.min(...positions.map(p => p.x)) - radius - 2;
+            const maxX = Math.max(...positions.map(p => p.x)) + radius + 2;
+            const minY = Math.min(...positions.map(p => p.y)) - radius - 2;
+            const maxY = Math.max(...positions.map(p => p.y)) + radius + 2;
+            
+            // Create a path using marching squares algorithm simulation
+            ctx.fillStyle = 'black';
+            ctx.beginPath();
+            
+            // For small clusters, use simple convex hull with rounded corners
+            if (positions.length <= 4) {
+                drawSmoothHull(ctx, positions, radius);
+            } else {
+                // For larger clusters, draw individual circles with smooth connections
+                positions.forEach((pos, index) => {
+                    ctx.beginPath();
+                    ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
+                    ctx.fill();
+                });
+                
+                // Add smooth connections between nearby circles
+                positions.forEach(pos1 => {
+                    positions.forEach(pos2 => {
+                        if (pos1 === pos2) return;
+                        const distance = Math.sqrt((pos1.x - pos2.x)**2 + (pos1.y - pos2.y)**2);
+                        if (distance <= radius * 2.2) {
+                            drawSmoothConnection(ctx, pos1, pos2, radius);
+                        }
+                    });
+                });
+            }
+        }
+        
+        function drawSmoothHull(ctx, positions, radius) {
+            if (positions.length === 1) {
+                ctx.arc(positions[0].x, positions[0].y, radius, 0, 2 * Math.PI);
+                return;
+            }
+            
+            // Calculate center point
+            const centerX = positions.reduce((sum, p) => sum + p.x, 0) / positions.length;
+            const centerY = positions.reduce((sum, p) => sum + p.y, 0) / positions.length;
+            
+            // Sort positions by angle from center for smooth hull
+            const sorted = positions.slice().sort((a, b) => {
+                const angleA = Math.atan2(a.y - centerY, a.x - centerX);
+                const angleB = Math.atan2(b.y - centerY, b.x - centerX);
+                return angleA - angleB;
+            });
+            
+            // Draw smooth hull with rounded corners
+            const expandedRadius = radius + 2;
+            for (let i = 0; i < sorted.length; i++) {
+                const current = sorted[i];
+                const next = sorted[(i + 1) % sorted.length];
+                
+                // Calculate expanded points
+                const currentAngle = Math.atan2(current.y - centerY, current.x - centerX);
+                const expandedX = current.x + Math.cos(currentAngle) * expandedRadius;
+                const expandedY = current.y + Math.sin(currentAngle) * expandedRadius;
+                
+                if (i === 0) {
+                    ctx.moveTo(expandedX, expandedY);
+                } else {
+                    // Use quadratic curves for smooth connections
+                    const controlX = (expandedX + current.x) / 2;
+                    const controlY = (expandedY + current.y) / 2;
+                    ctx.quadraticCurveTo(controlX, controlY, expandedX, expandedY);
+                }
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            // Fill in the original circle positions to ensure coverage
+            positions.forEach(pos => {
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
+                ctx.fill();
+            });
+        }
+        
+        function drawSmoothConnection(ctx, pos1, pos2, radius) {
+            const distance = Math.sqrt((pos1.x - pos2.x)**2 + (pos1.y - pos2.y)**2);
+            if (distance <= 0) return;
+            
+            // Calculate perpendicular offset for smooth connection
+            const offsetRatio = Math.max(0, 1 - distance / (radius * 2));
+            const offset = radius * offsetRatio * 0.4; // Reduced for tighter connections
+            
+            const dx = pos2.x - pos1.x;
+            const dy = pos2.y - pos1.y;
+            const perpX = -dy / distance * offset;
+            const perpY = dx / distance * offset;
+            
+            // Draw smooth connecting shape
+            ctx.beginPath();
+            ctx.moveTo(pos1.x + perpX, pos1.y + perpY);
+            ctx.lineTo(pos2.x + perpX, pos2.y + perpY);
+            ctx.lineTo(pos2.x - perpX, pos2.y - perpY);
+            ctx.lineTo(pos1.x - perpX, pos1.y - perpY);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
         function encodeText() {
             const text = document.getElementById('textInput').value;
             const size = parseInt(document.getElementById('sizeInput').value) || 400;
@@ -476,37 +592,38 @@
             console.log('=== DIRECT CANVAS ENCODING ===');
             console.log('Text:', text);
             console.log('Bits:', bits);
-            console.log('Drawing black squares for 1-bits:');
+            console.log('Drawing black circles for 1-bits:');
             
-            // Draw bits directly on canvas with tighter ring spacing
-            let blackSquareCount = 0;
+            // Draw clean, simple circles for each 1-bit
+            let blackCircleCount = 0;
             for (let ring = 0; ring < encoder.maxRings; ring++) {
-                const radius = encoder.center - 15 - (ring * 10); // Tighter spacing
+                const radius = encoder.center - 15 - (ring * 10);
                 if (radius < 5) break;
                 
                 for (let segment = 0; segment < encoder.bitsPerRing; segment++) {
                     const bitIndex = ring * encoder.bitsPerRing + segment;
                     const bit = bits[bitIndex] || '0';
                     
-                    const angle = (segment + 0.5) / encoder.bitsPerRing * 2 * Math.PI;
-                    const x = Math.round(encoder.center + Math.cos(angle) * radius);
-                    const y = Math.round(encoder.center + Math.sin(angle) * radius);
-                    
                     if (bit === '1') {
-                        // Draw smaller black squares for more rings
-                        ctx.fillStyle = 'black';
-                        const squareSize = 8; // Smaller squares
-                        ctx.fillRect(x - squareSize/2, y - squareSize/2, squareSize, squareSize);
-                        blackSquareCount++;
+                        const angle = (segment + 0.5) / encoder.bitsPerRing * 2 * Math.PI;
+                        const x = Math.round(encoder.center + Math.cos(angle) * radius);
+                        const y = Math.round(encoder.center + Math.sin(angle) * radius);
                         
-                        if (ring < 2) { // Log first 2 rings
+                        // Draw clean, precise circles
+                        ctx.fillStyle = 'black';
+                        ctx.beginPath();
+                        ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                        ctx.fill();
+                        blackCircleCount++;
+                        
+                        if (ring < 2) {
                             console.log(`BLACK at Ring ${ring}, Seg ${segment}: pos(${x},${y})`);
                         }
                     }
                 }
             }
             
-            console.log(`Total black squares: ${blackSquareCount}`);
+            console.log(`Total black circles: ${blackCircleCount}`);
             
             // Convert canvas to data URL and create SVG that embeds the image
             const dataUrl = canvas.toDataURL('image/png');
