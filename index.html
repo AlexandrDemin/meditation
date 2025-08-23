@@ -151,7 +151,7 @@
         <div class="section">
             <h2>🔮 Encode Information</h2>
             <div class="input-group">
-                <input type="text" id="textInput" placeholder="Enter text to encode (max 100 chars)" maxlength="100">
+                <input type="text" id="textInput" placeholder="Enter text to encode (max 50 chars)" maxlength="50">
                 <input type="number" id="sizeInput" value="400" min="200" max="800" placeholder="Size">
                 <button onclick="encodeText()">Encode</button>
             </div>
@@ -196,21 +196,28 @@
             constructor(size = 400) {
                 this.size = size;
                 this.center = size / 2;
-                this.maxRings = 8; // Maximum number of data rings
-                this.bitsPerRing = 12; // 12 segments per ring
-                this.maxDataBits = this.maxRings * this.bitsPerRing; // 96 bits max
+                this.maxRings = 10; // Increased for more data capacity
+                this.bitsPerRing = 16; // More segments per ring for better precision
+                this.maxDataBits = this.maxRings * this.bitsPerRing; // 160 bits max
             }
             
             textToBits(text) {
                 let bits = '';
                 // Add length header (8 bits)
-                const length = Math.min(text.length, 255);
+                const length = Math.min(text.length, 50);
                 bits += length.toString(2).padStart(8, '0');
                 
-                // Add text data
+                // Add text data - each character is 8 bits (supports full ASCII)
                 for (let i = 0; i < length; i++) {
                     bits += text.charCodeAt(i).toString(2).padStart(8, '0');
                 }
+                
+                // Add checksum for error detection (8 bits)
+                let checksum = 0;
+                for (let i = 0; i < text.length; i++) {
+                    checksum ^= text.charCodeAt(i);
+                }
+                bits += checksum.toString(2).padStart(8, '0');
                 
                 // Pad to fit our capacity
                 while (bits.length < this.maxDataBits) {
@@ -223,7 +230,7 @@
             bitsToText(bits) {
                 try {
                     const length = parseInt(bits.substring(0, 8), 2);
-                    if (length === 0 || length > 100) return null;
+                    if (length === 0 || length > 50) return null;
                     
                     let text = '';
                     for (let i = 0; i < length; i++) {
@@ -232,6 +239,20 @@
                         if (charCode === 0) break;
                         text += String.fromCharCode(charCode);
                     }
+                    
+                    // Verify checksum
+                    const checksumStart = 8 + (length * 8);
+                    const storedChecksum = parseInt(bits.substring(checksumStart, checksumStart + 8), 2);
+                    let calculatedChecksum = 0;
+                    for (let i = 0; i < text.length; i++) {
+                        calculatedChecksum ^= text.charCodeAt(i);
+                    }
+                    
+                    if (storedChecksum !== calculatedChecksum) {
+                        console.warn('Checksum mismatch - data may be corrupted');
+                        // Return text anyway, but could indicate error
+                    }
+                    
                     return text;
                 } catch (e) {
                     return null;
@@ -260,10 +281,10 @@
                     svgElements.push(`<circle cx="${x}" cy="${y}" r="${petalRadius}" fill="none" stroke="black" stroke-width="1" opacity="0.2"/>`);
                 }
                 
-                // Draw data rings
+                // Draw data rings with higher precision
                 for (let ring = 0; ring < this.maxRings; ring++) {
-                    const radius = this.center - 30 - (ring * 25);
-                    if (radius < 30) break;
+                    const radius = this.center - 25 - (ring * 20);
+                    if (radius < 25) break;
                     
                     for (let segment = 0; segment < this.bitsPerRing; segment++) {
                         const bitIndex = ring * this.bitsPerRing + segment;
@@ -280,9 +301,10 @@
                         const largeArcFlag = (endAngle - startAngle) > 180 ? 1 : 0;
                         
                         const color = bit === '1' ? 'black' : 'white';
-                        const strokeColor = bit === '1' ? 'black' : '#cccccc';
+                        const strokeColor = 'black';
+                        const strokeWidth = bit === '1' ? '0.5' : '0.25';
                         
-                        svgElements.push(`<path d="M ${this.center} ${this.center} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z" fill="${color}" stroke="${strokeColor}" stroke-width="1"/>`);
+                        svgElements.push(`<path d="M ${this.center} ${this.center} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeWidth}"/>`);
                     }
                 }
                 
@@ -322,10 +344,10 @@
                 // Draw inner decorative elements
                 this.drawSacredElements(ctx);
                 
-                // Draw data rings
+                // Draw data rings with higher precision
                 for (let ring = 0; ring < this.maxRings; ring++) {
-                    const radius = this.center - 30 - (ring * 25);
-                    if (radius < 30) break;
+                    const radius = this.center - 25 - (ring * 20);
+                    if (radius < 25) break;
                     
                     for (let segment = 0; segment < this.bitsPerRing; segment++) {
                         const bitIndex = ring * this.bitsPerRing + segment;
@@ -336,8 +358,8 @@
                         
                         ctx.beginPath();
                         ctx.arc(this.center, this.center, radius, angle, nextAngle);
-                        ctx.lineWidth = 15;
-                        ctx.strokeStyle = bit === '1' ? 'black' : '#cccccc';
+                        ctx.lineWidth = 12;
+                        ctx.strokeStyle = bit === '1' ? 'black' : '#e0e0e0';
                         ctx.stroke();
                     }
                 }
@@ -391,28 +413,40 @@
                 
                 let bits = '';
                 
-                // Sample each ring and segment
+                // Sample each ring and segment with improved precision
                 for (let ring = 0; ring < this.maxRings; ring++) {
-                    const radius = this.center - 30 - (ring * 25);
-                    if (radius < 30) break;
+                    const radius = this.center - 25 - (ring * 20);
+                    if (radius < 25) break;
                     
                     for (let segment = 0; segment < this.bitsPerRing; segment++) {
                         const angle = (segment + 0.5) / this.bitsPerRing * 2 * Math.PI;
-                        const x = Math.round(this.center + Math.cos(angle) * radius);
-                        const y = Math.round(this.center + Math.sin(angle) * radius);
                         
-                        if (x >= 0 && x < this.size && y >= 0 && y < this.size) {
-                            const pixelIndex = (y * this.size + x) * 4;
-                            const r = data[pixelIndex];
-                            const g = data[pixelIndex + 1];
-                            const b = data[pixelIndex + 2];
-                            
-                            // Check if pixel is dark (data bit) or light (no data)
-                            const brightness = (r + g + b) / 3;
-                            bits += brightness < 128 ? '1' : '0';
-                        } else {
-                            bits += '0';
+                        // Sample multiple points for better accuracy
+                        let darkCount = 0;
+                        let totalSamples = 0;
+                        
+                        for (let r = radius - 5; r <= radius + 5; r += 2) {
+                            for (let angleOffset = -0.02; angleOffset <= 0.02; angleOffset += 0.01) {
+                                const sampleAngle = angle + angleOffset;
+                                const x = Math.round(this.center + Math.cos(sampleAngle) * r);
+                                const y = Math.round(this.center + Math.sin(sampleAngle) * r);
+                                
+                                if (x >= 0 && x < this.size && y >= 0 && y < this.size) {
+                                    const pixelIndex = (y * this.size + x) * 4;
+                                    const r_val = data[pixelIndex];
+                                    const g = data[pixelIndex + 1];
+                                    const b = data[pixelIndex + 2];
+                                    
+                                    const brightness = (r_val + g + b) / 3;
+                                    if (brightness < 128) darkCount++;
+                                    totalSamples++;
+                                }
+                            }
                         }
+                        
+                        // Determine bit based on majority of samples
+                        const bit = totalSamples > 0 && (darkCount / totalSamples) > 0.5 ? '1' : '0';
+                        bits += bit;
                     }
                 }
                 
@@ -431,8 +465,8 @@
                 return;
             }
             
-            if (text.length > 100) {
-                showStatus('encodeStatus', 'Text too long (max 100 characters)', 'error');
+            if (text.length > 50) {
+                showStatus('encodeStatus', 'Text too long (max 50 characters)', 'error');
                 return;
             }
             
@@ -578,9 +612,9 @@
             }
         }
         
-        // Initialize with example
+        // Initialize with your example string
         window.onload = function() {
-            document.getElementById('textInput').value = 'Hello World!';
+            document.getElementById('textInput').value = 'TR3BA7zXEhZb8kzz9H6BYGrudbdxwk7Rsk';
             encodeText();
         };
     </script>
