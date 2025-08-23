@@ -133,22 +133,22 @@
         
         #cameraFeed {
             width: 100%;
-            max-width: 400px;
-            border-radius: 10px;
+            max-width: 100%;
+            height: auto;
+            border-radius: 4px;
             background: #000;
+            border: 2px solid #000000;
         }
         
         .canvas-container {
             text-align: center;
-            margin: 20px 0;
+            margin: 15px 0;
         }
-        
         
         .download-btn {
             background: #ffffff;
             color: #000000;
             border: 2px solid #000000;
-            margin-left: 10px;
         }
         
         .download-btn:hover {
@@ -162,6 +162,7 @@
             margin: 10px 0;
             font-weight: bold;
             border: 2px solid #000000;
+            word-break: break-word;
         }
         
         .success {
@@ -177,6 +178,34 @@
         .info {
             background: #ffffff;
             color: #000000;
+        }
+        
+        .camera-controls {
+            display: flex;
+            gap: 8px;
+            flex-direction: column;
+            margin-bottom: 15px;
+        }
+        
+        @media (min-width: 480px) {
+            .camera-controls {
+                flex-direction: row;
+            }
+        }
+        
+        .decode-result {
+            margin-top: 15px;
+            padding: 10px;
+            border: 2px solid #000000;
+            border-radius: 4px;
+            background: #f9f9f9;
+            word-break: break-all;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        
+        .hidden {
+            display: none;
         }
     </style>
 </head>
@@ -233,9 +262,9 @@
             constructor(size = 400) {
                 this.size = size;
                 this.center = size / 2;
-                this.maxRings = 10; // Increased for more data capacity
-                this.bitsPerRing = 16; // More segments per ring for better precision
-                this.maxDataBits = this.maxRings * this.bitsPerRing; // 160 bits max
+                this.maxRings = 18; // 18 rings for high capacity
+                this.bitsPerRing = 16; // 16 segments per ring
+                this.maxDataBits = this.maxRings * this.bitsPerRing; // 288 bits total
             }
             
             textToBits(text) {
@@ -266,181 +295,79 @@
             
             bitsToText(bits) {
                 try {
-                    const length = parseInt(bits.substring(0, 8), 2);
-                    if (length === 0 || length > 50) return null;
+                    console.log('=== DECODING PROCESS ===');
+                    console.log('Total bits received:', bits.length);
+                    
+                    // Extract length (first 8 bits)
+                    const lengthBits = bits.substring(0, 8);
+                    const length = parseInt(lengthBits, 2);
+                    console.log('Length bits:', lengthBits, '→ length:', length);
+                    
+                    if (length === 0 || length > 50) {
+                        console.log('❌ Invalid length:', length);
+                        console.log('Bit pattern analysis:');
+                        console.log('First 32 bits:', bits.substring(0, 32));
+                        console.log('Might be bit alignment issue...');
+                        return null;
+                    }
                     
                     let text = '';
+                    console.log('Decoding characters:');
+                    
+                    // Decode each character
                     for (let i = 0; i < length; i++) {
                         const start = 8 + (i * 8);
-                        const charCode = parseInt(bits.substring(start, start + 8), 2);
-                        if (charCode === 0) break;
-                        text += String.fromCharCode(charCode);
+                        const end = start + 8;
+                        
+                        if (end > bits.length) {
+                            console.log(`❌ Not enough bits for character ${i}`);
+                            break;
+                        }
+                        
+                        const charBits = bits.substring(start, end);
+                        const charCode = parseInt(charBits, 2);
+                        const char = String.fromCharCode(charCode);
+                        
+                        console.log(`  Char ${i}: ${charBits} → ${charCode} → "${char}"`);
+                        
+                        // Validate character code
+                        if (charCode < 32 || charCode > 126) {
+                            console.log(`❌ Invalid character code ${charCode} at position ${i}`);
+                            return text; // Return what we have so far
+                        }
+                        
+                        text += char;
                     }
                     
-                    // Verify checksum
+                    console.log('✅ Decoded text:', `"${text}"`);
+                    console.log('Text length:', text.length);
+                    
+                    // Check checksum if available
                     const checksumStart = 8 + (length * 8);
-                    const storedChecksum = parseInt(bits.substring(checksumStart, checksumStart + 8), 2);
-                    let calculatedChecksum = 0;
-                    for (let i = 0; i < text.length; i++) {
-                        calculatedChecksum ^= text.charCodeAt(i);
-                    }
-                    
-                    if (storedChecksum !== calculatedChecksum) {
-                        console.warn('Checksum mismatch - data may be corrupted');
-                        // Return text anyway, but could indicate error
+                    if (checksumStart + 8 <= bits.length) {
+                        const checksumBits = bits.substring(checksumStart, checksumStart + 8);
+                        const storedChecksum = parseInt(checksumBits, 2);
+                        
+                        let calculatedChecksum = 0;
+                        for (let i = 0; i < text.length; i++) {
+                            calculatedChecksum ^= text.charCodeAt(i);
+                        }
+                        
+                        console.log('Checksum bits:', checksumBits, '→', storedChecksum);
+                        console.log('Calculated checksum:', calculatedChecksum);
+                        
+                        if (storedChecksum === calculatedChecksum) {
+                            console.log('✅ Checksum valid');
+                        } else {
+                            console.log('⚠️ Checksum mismatch - possible corruption');
+                        }
                     }
                     
                     return text;
                 } catch (e) {
+                    console.error('❌ Error in bitsToText:', e);
                     return null;
                 }
-            }
-            
-            encodeSVG(text) {
-                const bits = this.textToBits(text);
-                let svgElements = [];
-                
-                // Create SVG container
-                svgElements.push(`<svg width="${this.size}" height="${this.size}" xmlns="http://www.w3.org/2000/svg">`);
-                
-                // White background
-                svgElements.push(`<rect width="${this.size}" height="${this.size}" fill="white" stroke="black" stroke-width="2"/>`);
-                
-                // Outer decorative circle
-                svgElements.push(`<circle cx="${this.center}" cy="${this.center}" r="${this.center - 10}" fill="none" stroke="black" stroke-width="3"/>`);
-                
-                // Draw flower of life pattern in background
-                const petalRadius = 30;
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i * Math.PI) / 3;
-                    const x = this.center + Math.cos(angle) * 40;
-                    const y = this.center + Math.sin(angle) * 40;
-                    svgElements.push(`<circle cx="${x}" cy="${y}" r="${petalRadius}" fill="none" stroke="black" stroke-width="1" opacity="0.2"/>`);
-                }
-                
-                // Draw data rings with higher precision
-                for (let ring = 0; ring < this.maxRings; ring++) {
-                    const radius = this.center - 25 - (ring * 20);
-                    if (radius < 25) break;
-                    
-                    for (let segment = 0; segment < this.bitsPerRing; segment++) {
-                        const bitIndex = ring * this.bitsPerRing + segment;
-                        const bit = bits[bitIndex] || '0';
-                        
-                        const startAngle = (segment / this.bitsPerRing) * 360;
-                        const endAngle = ((segment + 1) / this.bitsPerRing) * 360;
-                        
-                        const x1 = this.center + Math.cos((startAngle * Math.PI) / 180) * radius;
-                        const y1 = this.center + Math.sin((startAngle * Math.PI) / 180) * radius;
-                        const x2 = this.center + Math.cos((endAngle * Math.PI) / 180) * radius;
-                        const y2 = this.center + Math.sin((endAngle * Math.PI) / 180) * radius;
-                        
-                        const largeArcFlag = (endAngle - startAngle) > 180 ? 1 : 0;
-                        
-                        const color = bit === '1' ? 'black' : 'white';
-                        const strokeColor = 'black';
-                        const strokeWidth = bit === '1' ? '0.5' : '0.25';
-                        
-                        svgElements.push(`<path d="M ${this.center} ${this.center} L ${x1} ${y1} A ${radius} ${radius} 0 0 1 ${x2} ${y2} Z" fill="${color}" stroke="${strokeColor}" stroke-width="${strokeWidth}"/>`);
-                    }
-                }
-                
-                // Center mandala
-                svgElements.push(`<circle cx="${this.center}" cy="${this.center}" r="20" fill="black"/>`);
-                
-                // Inner star
-                let starPath = '';
-                for (let i = 0; i < 8; i++) {
-                    const angle = (i * Math.PI) / 4;
-                    const x = this.center + Math.cos(angle) * 12;
-                    const y = this.center + Math.sin(angle) * 12;
-                    if (i === 0) starPath += `M ${x} ${y}`;
-                    else starPath += ` L ${x} ${y}`;
-                }
-                starPath += ' Z';
-                svgElements.push(`<path d="${starPath}" fill="white"/>`);
-                
-                svgElements.push('</svg>');
-                return svgElements.join('\n');
-            }
-            
-            encode(text, canvas) {
-                const ctx = canvas.getContext('2d');
-                ctx.fillStyle = 'white';
-                ctx.fillRect(0, 0, this.size, this.size);
-                
-                const bits = this.textToBits(text);
-                
-                // Draw outer decorative circle
-                ctx.strokeStyle = 'black';
-                ctx.lineWidth = 3;
-                ctx.beginPath();
-                ctx.arc(this.center, this.center, this.center - 10, 0, 2 * Math.PI);
-                ctx.stroke();
-                
-                // Draw inner decorative elements
-                this.drawSacredElements(ctx);
-                
-                // Draw data rings with higher precision
-                for (let ring = 0; ring < this.maxRings; ring++) {
-                    const radius = this.center - 25 - (ring * 20);
-                    if (radius < 25) break;
-                    
-                    for (let segment = 0; segment < this.bitsPerRing; segment++) {
-                        const bitIndex = ring * this.bitsPerRing + segment;
-                        const bit = bits[bitIndex] || '0';
-                        
-                        const angle = (segment / this.bitsPerRing) * 2 * Math.PI;
-                        const nextAngle = ((segment + 1) / this.bitsPerRing) * 2 * Math.PI;
-                        
-                        ctx.beginPath();
-                        ctx.arc(this.center, this.center, radius, angle, nextAngle);
-                        ctx.lineWidth = 12;
-                        ctx.strokeStyle = bit === '1' ? 'black' : '#e0e0e0';
-                        ctx.stroke();
-                    }
-                }
-                
-                // Center mandala
-                this.drawCenterMandala(ctx);
-            }
-            
-            drawSacredElements(ctx) {
-                // Draw flower of life pattern in background
-                ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
-                ctx.lineWidth = 1;
-                
-                const petalRadius = 30;
-                for (let i = 0; i < 6; i++) {
-                    const angle = (i * Math.PI) / 3;
-                    const x = this.center + Math.cos(angle) * 40;
-                    const y = this.center + Math.sin(angle) * 40;
-                    
-                    ctx.beginPath();
-                    ctx.arc(x, y, petalRadius, 0, 2 * Math.PI);
-                    ctx.stroke();
-                }
-            }
-            
-            drawCenterMandala(ctx) {
-                // Draw center sacred symbol
-                ctx.fillStyle = 'black';
-                ctx.beginPath();
-                ctx.arc(this.center, this.center, 20, 0, 2 * Math.PI);
-                ctx.fill();
-                
-                // Draw inner star
-                ctx.fillStyle = 'white';
-                ctx.beginPath();
-                for (let i = 0; i < 8; i++) {
-                    const angle = (i * Math.PI) / 4;
-                    const x = this.center + Math.cos(angle) * 12;
-                    const y = this.center + Math.sin(angle) * 12;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.fill();
             }
             
             decode(canvas) {
@@ -450,54 +377,67 @@
                 
                 let bits = '';
                 
-                // Calculate scaling factors if canvas size is different
+                // Calculate scaling factors
                 const scaleX = canvas.width / this.size;
                 const scaleY = canvas.height / this.size;
+                const scale = Math.min(scaleX, scaleY);
                 const scaledCenter = { x: canvas.width / 2, y: canvas.height / 2 };
                 
-                // Sample each ring and segment with improved precision
+                console.log('=== DECODING ANALYSIS ===');
+                console.log('Canvas:', canvas.width, 'x', canvas.height, 'Scale:', scale);
+                
+                // Sample each ring with updated spacing
                 for (let ring = 0; ring < this.maxRings; ring++) {
-                    const baseRadius = this.center - 25 - (ring * 20);
-                    const radius = baseRadius * Math.min(scaleX, scaleY);
-                    if (radius < 15) break;
+                    const baseRadius = this.center - 15 - (ring * 10); // Match encoding spacing
+                    const radius = baseRadius * scale;
+                    
+                    if (radius < 5 * scale) break;
+                    
+                    console.log(`Decoding Ring ${ring}: radius ${radius.toFixed(1)}`);
                     
                     for (let segment = 0; segment < this.bitsPerRing; segment++) {
-                        const angle = (segment + 0.5) / this.bitsPerRing * 2 * Math.PI;
+                        // Calculate the exact center angle for this segment
+                        const centerAngle = (segment + 0.5) / this.bitsPerRing * 2 * Math.PI;
+                        const x = Math.round(scaledCenter.x + Math.cos(centerAngle) * radius);
+                        const y = Math.round(scaledCenter.y + Math.sin(centerAngle) * radius);
                         
-                        // Sample multiple points for better accuracy
-                        let darkCount = 0;
-                        let totalSamples = 0;
+                        // Sample multiple nearby pixels to handle anti-aliasing
+                        let totalBrightness = 0;
+                        let samples = 0;
                         
-                        // Sample in a small area around the target point
-                        for (let r = radius - 3; r <= radius + 3; r += 1) {
-                            for (let angleOffset = -0.05; angleOffset <= 0.05; angleOffset += 0.02) {
-                                const sampleAngle = angle + angleOffset;
-                                const x = Math.round(scaledCenter.x + Math.cos(sampleAngle) * r);
-                                const y = Math.round(scaledCenter.y + Math.sin(sampleAngle) * r);
+                        // Sample in a 3x3 area around the target point
+                        for (let dx = -1; dx <= 1; dx++) {
+                            for (let dy = -1; dy <= 1; dy++) {
+                                const sampleX = x + dx;
+                                const sampleY = y + dy;
                                 
-                                if (x >= 0 && x < canvas.width && y >= 0 && y < canvas.height) {
-                                    const pixelIndex = (y * canvas.width + x) * 4;
-                                    const r_val = data[pixelIndex];
+                                if (sampleX >= 0 && sampleX < canvas.width && sampleY >= 0 && sampleY < canvas.height) {
+                                    const pixelIndex = (sampleY * canvas.width + sampleX) * 4;
+                                    const r = data[pixelIndex];
                                     const g = data[pixelIndex + 1];
                                     const b = data[pixelIndex + 2];
-                                    
-                                    const brightness = (r_val + g + b) / 3;
-                                    if (brightness < 180) darkCount++; // More lenient threshold
-                                    totalSamples++;
+                                    const brightness = (r + g + b) / 3;
+                                    totalBrightness += brightness;
+                                    samples++;
                                 }
                             }
                         }
                         
-                        // Determine bit based on majority of samples
-                        const bit = totalSamples > 0 && (darkCount / totalSamples) > 0.3 ? '1' : '0';
+                        const avgBrightness = samples > 0 ? totalBrightness / samples : 255;
+                        
+                        // More lenient threshold to handle anti-aliasing
+                        const bit = avgBrightness < 180 ? '1' : '0';
                         bits += bit;
+                        
+                        // Log first ring details
+                        if (ring === 0) {
+                            console.log(`Ring ${ring}, Seg ${segment}: pos(${x},${y}), avgBrightness=${avgBrightness.toFixed(1)}, bit=${bit}`);
+                        }
                     }
                 }
                 
-                // Debug: log first few bits
-                console.log('Decoded bits (first 32):', bits.substring(0, 32));
-                console.log('Canvas size:', canvas.width, 'x', canvas.height);
-                console.log('Scale factors:', scaleX, scaleY);
+                console.log('Total bits decoded:', bits.length);
+                console.log('First 64 bits:', bits.substring(0, 64));
                 
                 return this.bitsToText(bits);
             }
@@ -519,17 +459,69 @@
                 return;
             }
             
-            const sizedEncoder = new SacredGeometryEncoder(size);
-            const svgContent = sizedEncoder.encodeSVG(text);
+            // Create encoder and get bits
+            const encoder = new SacredGeometryEncoder(size);
+            const bits = encoder.textToBits(text);
             
-            // Display SVG
+            // Create canvas for direct pixel manipulation
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+            
+            // Fill with white background
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, size, size);
+            
+            console.log('=== DIRECT CANVAS ENCODING ===');
+            console.log('Text:', text);
+            console.log('Bits:', bits);
+            console.log('Drawing black squares for 1-bits:');
+            
+            // Draw bits directly on canvas with tighter ring spacing
+            let blackSquareCount = 0;
+            for (let ring = 0; ring < encoder.maxRings; ring++) {
+                const radius = encoder.center - 15 - (ring * 10); // Tighter spacing
+                if (radius < 5) break;
+                
+                for (let segment = 0; segment < encoder.bitsPerRing; segment++) {
+                    const bitIndex = ring * encoder.bitsPerRing + segment;
+                    const bit = bits[bitIndex] || '0';
+                    
+                    const angle = (segment + 0.5) / encoder.bitsPerRing * 2 * Math.PI;
+                    const x = Math.round(encoder.center + Math.cos(angle) * radius);
+                    const y = Math.round(encoder.center + Math.sin(angle) * radius);
+                    
+                    if (bit === '1') {
+                        // Draw smaller black squares for more rings
+                        ctx.fillStyle = 'black';
+                        const squareSize = 8; // Smaller squares
+                        ctx.fillRect(x - squareSize/2, y - squareSize/2, squareSize, squareSize);
+                        blackSquareCount++;
+                        
+                        if (ring < 2) { // Log first 2 rings
+                            console.log(`BLACK at Ring ${ring}, Seg ${segment}: pos(${x},${y})`);
+                        }
+                    }
+                }
+            }
+            
+            console.log(`Total black squares: ${blackSquareCount}`);
+            
+            // Convert canvas to data URL and create SVG that embeds the image
+            const dataUrl = canvas.toDataURL('image/png');
+            const svgContent = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+                <image href="${dataUrl}" x="0" y="0" width="${size}" height="${size}"/>
+            </svg>`;
+            
+            // Display in SVG output
             const svgOutput = document.getElementById('svgOutput');
             svgOutput.innerHTML = svgContent;
             
             // Store for download
             window.currentSVG = svgContent;
             
-            showStatus('encodeStatus', `Encoded "${text}" successfully!`, 'success');
+            showStatus('encodeStatus', `Encoded "${text}" successfully using direct canvas!`, 'success');
         }
         
         function downloadSVG() {
@@ -691,75 +683,104 @@
                     canvas.style.width = maxSize + 'px';
                     canvas.style.height = maxSize + 'px';
                     
+                    // Clear with white background
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, maxSize, maxSize);
+                    
                     // Draw image to display canvas
                     ctx.drawImage(img, 0, 0, maxSize, maxSize);
                     
-                    // Try decoding with different approaches
-                    let result = null;
+                    // Create a debug canvas with enhanced contrast
+                    const debugCanvas = document.createElement('canvas');
+                    const debugCtx = debugCanvas.getContext('2d');
+                    debugCanvas.width = 400;
+                    debugCanvas.height = 400;
                     
-                    // Method 1: Direct decode from display canvas
-                    try {
-                        const standardEncoder = new SacredGeometryEncoder(maxSize);
-                        result = standardEncoder.decode(canvas);
-                    } catch (e) {
-                        console.log('Method 1 failed:', e);
+                    // Clear debug canvas with white
+                    debugCtx.fillStyle = 'white';
+                    debugCtx.fillRect(0, 0, 400, 400);
+                    
+                    // Draw image with no smoothing for crisp edges
+                    debugCtx.imageSmoothingEnabled = false;
+                    debugCtx.drawImage(img, 0, 0, 400, 400);
+                    
+                    // Apply contrast enhancement to eliminate anti-aliasing
+                    const imageData = debugCtx.getImageData(0, 0, 400, 400);
+                    const data = imageData.data;
+                    
+                    // Convert all pixels to pure black or white
+                    for (let i = 0; i < data.length; i += 4) {
+                        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                        const bw = brightness < 200 ? 0 : 255; // More aggressive threshold
+                        data[i] = bw;     // R
+                        data[i + 1] = bw; // G  
+                        data[i + 2] = bw; // B
+                        // Keep alpha as is
                     }
                     
-                    // Method 2: Create standardized 400x400 canvas
-                    if (!result) {
-                        try {
-                            const decodeCanvas = document.createElement('canvas');
-                            const decodeCtx = decodeCanvas.getContext('2d');
-                            decodeCanvas.width = 400;
-                            decodeCanvas.height = 400;
-                            
-                            // Clear canvas with white background
-                            decodeCtx.fillStyle = 'white';
-                            decodeCtx.fillRect(0, 0, 400, 400);
-                            
-                            // Draw image
-                            decodeCtx.drawImage(img, 0, 0, 400, 400);
-                            
-                            result = encoder.decode(decodeCanvas);
-                        } catch (e) {
-                            console.log('Method 2 failed:', e);
+                    debugCtx.putImageData(imageData, 0, 0);
+                    
+                    // Now decode using the enhanced image
+                    const testEncoder = new SacredGeometryEncoder(400);
+                    
+                    console.log('=== ENHANCED SAMPLING ===');
+                    let sampledBits = '';
+                    
+                    // Get the processed image data
+                    const processedData = debugCtx.getImageData(0, 0, 400, 400).data;
+                    
+                    for (let ring = 0; ring < testEncoder.maxRings; ring++) {
+                        const radius = testEncoder.center - 15 - (ring * 10);
+                        if (radius < 5) {
+                            console.log(`Stopped at ring ${ring}, radius ${radius} too small`);
+                            break;
                         }
-                    }
-                    
-                    // Method 3: Try with image preprocessing
-                    if (!result) {
-                        try {
-                            const preprocessCanvas = document.createElement('canvas');
-                            const preprocessCtx = preprocessCanvas.getContext('2d');
-                            preprocessCanvas.width = 400;
-                            preprocessCanvas.height = 400;
+                        
+                        if (ring < 3) console.log(`Processing ring ${ring} at radius ${radius}`);
+                        
+                        for (let segment = 0; segment < testEncoder.bitsPerRing; segment++) {
+                            const angle = (segment + 0.5) / testEncoder.bitsPerRing * 2 * Math.PI;
+                            const x = Math.round(testEncoder.center + Math.cos(angle) * radius);
+                            const y = Math.round(testEncoder.center + Math.sin(angle) * radius);
                             
-                            // White background
-                            preprocessCtx.fillStyle = 'white';
-                            preprocessCtx.fillRect(0, 0, 400, 400);
-                            
-                            // Draw with better quality settings
-                            preprocessCtx.imageSmoothingEnabled = false;
-                            preprocessCtx.drawImage(img, 0, 0, 400, 400);
-                            
-                            // Apply contrast enhancement
-                            const imageData = preprocessCtx.getImageData(0, 0, 400, 400);
-                            const data = imageData.data;
-                            
-                            for (let i = 0; i < data.length; i += 4) {
-                                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                                const enhanced = avg < 128 ? 0 : 255;
-                                data[i] = enhanced;     // R
-                                data[i + 1] = enhanced; // G  
-                                data[i + 2] = enhanced; // B
+                            let bit = '0';
+                            if (x >= 0 && x < 400 && y >= 0 && y < 400) {
+                                const pixelIndex = (y * 400 + x) * 4;
+                                const r = processedData[pixelIndex];
+                                const g = processedData[pixelIndex + 1];
+                                const b = processedData[pixelIndex + 2];
+                                const brightness = (r + g + b) / 3;
+                                bit = brightness < 128 ? '1' : '0';
+                                
+                                if (ring === 0 || (ring < 3 && segment < 4)) {
+                                    console.log(`Ring ${ring}, Seg ${segment}: pos(${x},${y}), RGB(${r},${g},${b}), bit=${bit}`);
+                                }
                             }
-                            
-                            preprocessCtx.putImageData(imageData, 0, 0);
-                            result = encoder.decode(preprocessCanvas);
-                        } catch (e) {
-                            console.log('Method 3 failed:', e);
+                            sampledBits += bit;
                         }
                     }
+                    
+                    console.log('Total sampled bits:', sampledBits.length);
+                    console.log('Expected max bits:', testEncoder.maxDataBits);
+                    
+                    // Compare with original text encoding to check alignment
+                    const originalText = 'TR3BA7zXEhZb8kzz9H6BYGrudbdxwk7Rsk';
+                    const expectedBits = testEncoder.textToBits(originalText);
+                    console.log('Expected first 64 bits: ', expectedBits.substring(0, 64));
+                    console.log('Actual   first 64 bits: ', sampledBits.substring(0, 64));
+                    
+                    // Make sure we got enough bits
+                    if (sampledBits.length < testEncoder.maxDataBits) {
+                        console.log(`⚠️ Only got ${sampledBits.length} bits, expected ${testEncoder.maxDataBits}`);
+                        while (sampledBits.length < testEncoder.maxDataBits) {
+                            sampledBits += '0';
+                        }
+                    }
+                    
+                    console.log('Final bits ready for decode:', sampledBits.length);
+                    
+                    // Try decoding
+                    const result = testEncoder.bitsToText(sampledBits);
                     
                     // Display results
                     if (result && result.length > 0) {
@@ -768,8 +789,8 @@
                         showStatus('decodeStatus', 'File decoded successfully!', 'success');
                     } else {
                         document.getElementById('decodedResult').innerHTML = 
-                            `<div class="error">❌ Could not decode image. Please ensure it's a valid sacred geometry code generated by this tool.</div>`;
-                        showStatus('decodeStatus', 'Decoding failed. Try a clearer image.', 'error');
+                            `<div class="error">❌ Could not decode image. Check console for bit comparison.</div>`;
+                        showStatus('decodeStatus', 'Decoding failed. Check console for details.', 'error');
                     }
                 };
                 
@@ -777,7 +798,20 @@
                     showStatus('decodeStatus', 'Error loading image file', 'error');
                 };
                 
-                img.src = e.target.result;
+                // Handle both SVG and raster images
+                if (file.type === 'image/svg+xml') {
+                    // For SVG files, read as text first
+                    const svgReader = new FileReader();
+                    svgReader.onload = function(svgEvent) {
+                        const svgText = svgEvent.target.result;
+                        const blob = new Blob([svgText], {type: 'image/svg+xml'});
+                        const url = URL.createObjectURL(blob);
+                        img.src = url;
+                    };
+                    svgReader.readAsText(file);
+                } else {
+                    img.src = e.target.result;
+                }
             };
             
             reader.onerror = function() {
@@ -798,7 +832,7 @@
             }
         }
         
-        // Initialize with your example string
+        // Initialize with example string
         window.onload = function() {
             document.getElementById('textInput').value = 'TR3BA7zXEhZb8kzz9H6BYGrudbdxwk7Rsk';
             encodeText();
