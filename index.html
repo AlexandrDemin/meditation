@@ -445,15 +445,21 @@
             
             decode(canvas) {
                 const ctx = canvas.getContext('2d');
-                const imageData = ctx.getImageData(0, 0, this.size, this.size);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 const data = imageData.data;
                 
                 let bits = '';
                 
+                // Calculate scaling factors if canvas size is different
+                const scaleX = canvas.width / this.size;
+                const scaleY = canvas.height / this.size;
+                const scaledCenter = { x: canvas.width / 2, y: canvas.height / 2 };
+                
                 // Sample each ring and segment with improved precision
                 for (let ring = 0; ring < this.maxRings; ring++) {
-                    const radius = this.center - 25 - (ring * 20);
-                    if (radius < 25) break;
+                    const baseRadius = this.center - 25 - (ring * 20);
+                    const radius = baseRadius * Math.min(scaleX, scaleY);
+                    if (radius < 15) break;
                     
                     for (let segment = 0; segment < this.bitsPerRing; segment++) {
                         const angle = (segment + 0.5) / this.bitsPerRing * 2 * Math.PI;
@@ -462,30 +468,36 @@
                         let darkCount = 0;
                         let totalSamples = 0;
                         
-                        for (let r = radius - 5; r <= radius + 5; r += 2) {
-                            for (let angleOffset = -0.02; angleOffset <= 0.02; angleOffset += 0.01) {
+                        // Sample in a small area around the target point
+                        for (let r = radius - 3; r <= radius + 3; r += 1) {
+                            for (let angleOffset = -0.05; angleOffset <= 0.05; angleOffset += 0.02) {
                                 const sampleAngle = angle + angleOffset;
-                                const x = Math.round(this.center + Math.cos(sampleAngle) * r);
-                                const y = Math.round(this.center + Math.sin(sampleAngle) * r);
+                                const x = Math.round(scaledCenter.x + Math.cos(sampleAngle) * r);
+                                const y = Math.round(scaledCenter.y + Math.sin(sampleAngle) * r);
                                 
-                                if (x >= 0 && x < this.size && y >= 0 && y < this.size) {
-                                    const pixelIndex = (y * this.size + x) * 4;
+                                if (x >= 0 && x < canvas.width && y >= 0 && y < canvas.height) {
+                                    const pixelIndex = (y * canvas.width + x) * 4;
                                     const r_val = data[pixelIndex];
                                     const g = data[pixelIndex + 1];
                                     const b = data[pixelIndex + 2];
                                     
                                     const brightness = (r_val + g + b) / 3;
-                                    if (brightness < 128) darkCount++;
+                                    if (brightness < 180) darkCount++; // More lenient threshold
                                     totalSamples++;
                                 }
                             }
                         }
                         
                         // Determine bit based on majority of samples
-                        const bit = totalSamples > 0 && (darkCount / totalSamples) > 0.5 ? '1' : '0';
+                        const bit = totalSamples > 0 && (darkCount / totalSamples) > 0.3 ? '1' : '0';
                         bits += bit;
                     }
                 }
+                
+                // Debug: log first few bits
+                console.log('Decoded bits (first 32):', bits.substring(0, 32));
+                console.log('Canvas size:', canvas.width, 'x', canvas.height);
+                console.log('Scale factors:', scaleX, scaleY);
                 
                 return this.bitsToText(bits);
             }
@@ -663,6 +675,8 @@
             const file = document.getElementById('imageFile').files[0];
             if (!file) return;
             
+            showStatus('decodeStatus', 'Processing image...', 'info');
+            
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
@@ -670,22 +684,106 @@
                     const canvas = document.getElementById('decodedCanvas');
                     const ctx = canvas.getContext('2d');
                     
-                    canvas.width = 400;
-                    canvas.height = 400;
+                    // Scale canvas for display
+                    const maxSize = window.innerWidth > 480 ? 400 : Math.min(window.innerWidth - 40, 300);
+                    canvas.width = maxSize;
+                    canvas.height = maxSize;
+                    canvas.style.width = maxSize + 'px';
+                    canvas.style.height = maxSize + 'px';
                     
-                    ctx.drawImage(img, 0, 0, 400, 400);
+                    // Draw image to display canvas
+                    ctx.drawImage(img, 0, 0, maxSize, maxSize);
                     
-                    const result = encoder.decode(canvas);
-                    if (result) {
+                    // Try decoding with different approaches
+                    let result = null;
+                    
+                    // Method 1: Direct decode from display canvas
+                    try {
+                        const standardEncoder = new SacredGeometryEncoder(maxSize);
+                        result = standardEncoder.decode(canvas);
+                    } catch (e) {
+                        console.log('Method 1 failed:', e);
+                    }
+                    
+                    // Method 2: Create standardized 400x400 canvas
+                    if (!result) {
+                        try {
+                            const decodeCanvas = document.createElement('canvas');
+                            const decodeCtx = decodeCanvas.getContext('2d');
+                            decodeCanvas.width = 400;
+                            decodeCanvas.height = 400;
+                            
+                            // Clear canvas with white background
+                            decodeCtx.fillStyle = 'white';
+                            decodeCtx.fillRect(0, 0, 400, 400);
+                            
+                            // Draw image
+                            decodeCtx.drawImage(img, 0, 0, 400, 400);
+                            
+                            result = encoder.decode(decodeCanvas);
+                        } catch (e) {
+                            console.log('Method 2 failed:', e);
+                        }
+                    }
+                    
+                    // Method 3: Try with image preprocessing
+                    if (!result) {
+                        try {
+                            const preprocessCanvas = document.createElement('canvas');
+                            const preprocessCtx = preprocessCanvas.getContext('2d');
+                            preprocessCanvas.width = 400;
+                            preprocessCanvas.height = 400;
+                            
+                            // White background
+                            preprocessCtx.fillStyle = 'white';
+                            preprocessCtx.fillRect(0, 0, 400, 400);
+                            
+                            // Draw with better quality settings
+                            preprocessCtx.imageSmoothingEnabled = false;
+                            preprocessCtx.drawImage(img, 0, 0, 400, 400);
+                            
+                            // Apply contrast enhancement
+                            const imageData = preprocessCtx.getImageData(0, 0, 400, 400);
+                            const data = imageData.data;
+                            
+                            for (let i = 0; i < data.length; i += 4) {
+                                const avg = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                                const enhanced = avg < 128 ? 0 : 255;
+                                data[i] = enhanced;     // R
+                                data[i + 1] = enhanced; // G  
+                                data[i + 2] = enhanced; // B
+                            }
+                            
+                            preprocessCtx.putImageData(imageData, 0, 0);
+                            result = encoder.decode(preprocessCanvas);
+                        } catch (e) {
+                            console.log('Method 3 failed:', e);
+                        }
+                    }
+                    
+                    // Display results
+                    if (result && result.length > 0) {
                         document.getElementById('decodedResult').innerHTML = 
-                            `<div class="success"><strong>Decoded from file:</strong> ${result}</div>`;
+                            `<div class="decode-result"><strong>✅ Decoded from file:</strong><br>${result}</div>`;
+                        showStatus('decodeStatus', 'File decoded successfully!', 'success');
                     } else {
                         document.getElementById('decodedResult').innerHTML = 
-                            `<div class="error">Could not decode image. Make sure it's a valid sacred geometry code.</div>`;
+                            `<div class="error">❌ Could not decode image. Please ensure it's a valid sacred geometry code generated by this tool.</div>`;
+                        showStatus('decodeStatus', 'Decoding failed. Try a clearer image.', 'error');
                     }
                 };
+                
+                img.onerror = function() {
+                    showStatus('decodeStatus', 'Error loading image file', 'error');
+                };
+                
                 img.src = e.target.result;
             };
+            
+            reader.onerror = function() {
+                showStatus('decodeStatus', 'Error reading file', 'error');
+            };
+            
             reader.readAsDataURL(file);
         }
         
