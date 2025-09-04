@@ -603,18 +603,49 @@
                     canvas.width = 400;
                     canvas.height = 400;
                     
+                    // Clear canvas with white background
                     ctx.fillStyle = 'white';
                     ctx.fillRect(0, 0, 400, 400);
+                    
+                    // Draw the image
                     ctx.drawImage(img, 0, 0, 400, 400);
                     
+                    // Try to decode
                     const result = encoder.decode(canvas);
                     
                     if (result && result.length > 0) {
                         document.getElementById('decodedResult').innerHTML = 
-                            `<div class="decode-result">Decoded: ${result}</div>`;
-                        showStatus('decodeStatus', 'Success', 'success');
+                            `<div class="decode-result">Decoded: "${result}"</div>`;
+                        showStatus('decodeStatus', 'Successfully decoded', 'success');
+                        
+                        // Draw sampling points overlay for debugging
+                        ctx.globalAlpha = 0.5;
+                        ctx.fillStyle = 'red';
+                        
+                        // Show sampling points
+                        const scale = 1; // canvas is already 400x400
+                        const center = { x: 200, y: 200 };
+                        
+                        for (let ring = 0; ring < encoder.numRings; ring++) {
+                            const segments = encoder.segmentsPerRing[ring];
+                            const radius = 35 + (ring * 22);
+                            
+                            for (let segment = 0; segment < segments; segment++) {
+                                const midAngle = ((segment + 0.425) / segments) * 2 * Math.PI - Math.PI / 2;
+                                const x = center.x + Math.cos(midAngle) * radius;
+                                const y = center.y + Math.sin(midAngle) * radius;
+                                
+                                // Draw a small circle at each sampling point
+                                ctx.beginPath();
+                                ctx.arc(x, y, 2, 0, 2 * Math.PI);
+                                ctx.fill();
+                            }
+                        }
+                        ctx.globalAlpha = 1;
                     } else {
-                        showStatus('decodeStatus', 'Could not decode', 'error');
+                        document.getElementById('decodedResult').innerHTML = 
+                            `<div class="decode-result">Could not decode - try adjusting the image</div>`;
+                        showStatus('decodeStatus', 'Decoding failed', 'error');
                     }
                 };
                 
