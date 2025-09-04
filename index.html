@@ -3,243 +3,213 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Sacred Geometry Encoder/Decoder</title>
+    <title>Circular Code Generator</title>
     <style>
         * {
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: #ffffff;
-            margin: 0;
-            padding: 10px;
+            padding: 20px;
             min-height: 100vh;
             color: #000000;
             font-size: 16px;
-            line-height: 1.4;
+            line-height: 1.6;
         }
         
         .container {
-            max-width: 100%;
+            max-width: 800px;
             margin: 0 auto;
-            background: #ffffff;
-            border-radius: 8px;
-            padding: 15px;
         }
         
         h1 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-size: 1.8em;
-            color: #000000;
-            font-weight: 300;
+            font-size: 24px;
+            font-weight: 400;
+            margin-bottom: 40px;
+            letter-spacing: -0.5px;
         }
         
         .section {
-            margin-bottom: 40px;
-            padding: 20px 0;
-            background: #ffffff;
+            margin-bottom: 60px;
         }
         
         .section h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            color: #000000;
-            font-size: 1.2em;
+            font-size: 18px;
             font-weight: 400;
+            margin-bottom: 20px;
+            color: #333;
         }
         
         .input-group {
             display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-            flex-direction: column;
-        }
-        
-        @media (min-width: 480px) {
-            .input-group {
-                flex-direction: row;
-            }
+            gap: 12px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         
         input[type="text"], input[type="number"], input[type="file"] {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            background: #ffffff;
+            flex: 1;
+            min-width: 200px;
+            padding: 10px 12px;
+            border: none;
+            border-bottom: 1px solid #ccc;
+            background: transparent;
             color: #000000;
             font-size: 16px;
-            -webkit-appearance: none;
             transition: border-color 0.2s;
         }
         
-        input[type="text"]:focus, input[type="number"]:focus, input[type="file"]:focus {
+        input[type="text"]:focus, input[type="number"]:focus {
             outline: none;
-            border-color: #000000;
+            border-bottom-color: #000;
         }
         
         input[type="number"] {
-            max-width: 120px;
+            max-width: 100px;
+            min-width: 80px;
         }
         
         button {
-            width: 100%;
             background: #000000;
             color: #ffffff;
             border: none;
-            padding: 14px 20px;
-            border-radius: 4px;
+            padding: 10px 24px;
             cursor: pointer;
+            font-size: 14px;
+            transition: background 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             font-weight: 500;
-            font-size: 16px;
-            transition: background 0.2s, transform 0.1s;
-            margin-bottom: 8px;
-            -webkit-appearance: none;
-            -webkit-tap-highlight-color: transparent;
         }
         
-        @media (min-width: 480px) {
-            button {
-                width: auto;
-                margin-bottom: 0;
-            }
-        }
-        
-        button:hover, button:focus {
-            background: #333333;
-            transform: translateY(-1px);
-            outline: none;
+        button:hover {
+            background: #333;
         }
         
         button:disabled {
-            background: #cccccc;
-            color: #999999;
+            background: #ccc;
             cursor: not-allowed;
-            transform: none;
         }
         
         #svgOutput {
-            border-radius: 4px;
-            background: white;
-            margin: 15px 0;
-            width: 100%;
-            max-width: 100%;
+            margin: 30px 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 420px;
         }
         
         #svgOutput svg {
             width: 100%;
             height: auto;
             max-width: 400px;
-            border-radius: 4px;
         }
         
         #cameraFeed {
             width: 100%;
             max-width: 100%;
             height: auto;
-            border-radius: 4px;
-            background: #000;
+            background: #f5f5f5;
+            margin-top: 20px;
         }
         
         .canvas-container {
             text-align: center;
-            margin: 20px 0;
+            margin: 30px 0;
         }
         
         .download-btn {
-            background: #ffffff;
-            color: #000000;
-            border: 1px solid #ddd;
+            background: #fff;
+            color: #000;
+            border: 1px solid #000;
         }
         
         .download-btn:hover {
-            background: #f5f5f5;
-            transform: translateY(-1px);
+            background: #000;
+            color: #fff;
         }
         
         .status {
-            padding: 12px 16px;
-            border-radius: 4px;
+            padding: 12px 0;
             margin: 15px 0;
-            font-weight: 400;
-            word-break: break-word;
-            background: #f8f9fa;
-            border-left: 3px solid #ddd;
+            font-size: 14px;
+            color: #666;
         }
         
         .success {
-            background: #f8f9fa;
-            border-left-color: #000000;
-            color: #000000;
+            color: #000;
         }
         
         .error {
-            background: #f8f9fa;
-            border-left-color: #dc3545;
-            color: #dc3545;
+            color: #000;
+            font-weight: 500;
         }
         
         .info {
-            background: #f8f9fa;
-            border-left-color: #6c757d;
-            color: #6c757d;
+            color: #666;
         }
         
         .camera-controls {
             display: flex;
-            gap: 8px;
-            flex-direction: column;
-            margin-bottom: 15px;
-        }
-        
-        @media (min-width: 480px) {
-            .camera-controls {
-                flex-direction: row;
-            }
+            gap: 12px;
+            margin-bottom: 20px;
         }
         
         .decode-result {
-            margin-top: 15px;
-            padding: 16px;
-            border-radius: 4px;
-            background: #f8f9fa;
-            word-break: break-all;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            margin-top: 20px;
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            font-family: 'Courier New', monospace;
             font-size: 14px;
-            border-left: 3px solid #000000;
+            color: #000;
         }
         
         .hidden {
             display: none;
         }
+        
+        .style-info {
+            color: #666;
+            font-size: 13px;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            line-height: 1.6;
+        }
+
+        canvas#decodedCanvas {
+            max-width: 100%;
+            background: #f9f9f9;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>✨ Sacred Geometry Encoder ✨</h1>
+        <h1>Circular Code Generator</h1>
         
         <div class="section">
-            <h2>🔮 Encode Information</h2>
+            <h2>Encode</h2>
             <div class="input-group">
-                <input type="text" id="textInput" placeholder="Enter text to encode (max 50 chars)" maxlength="50">
-                <input type="number" id="sizeInput" value="400" min="200" max="800" placeholder="Size">
-                <button onclick="encodeText()">Encode</button>
+                <input type="text" id="textInput" placeholder="Enter text to encode" maxlength="50">
+                <input type="number" id="sizeInput" value="400" min="300" max="800" placeholder="Size">
+                <button onclick="encodeText()">Generate</button>
             </div>
+            <div id="svgOutput"></div>
             <div class="canvas-container">
-                <div id="svgOutput"></div>
-                <br>
-                <button onclick="downloadSVG()" class="download-btn">Download Sacred Symbol (SVG)</button>
+                <button onclick="downloadSVG()" class="download-btn">Download SVG</button>
             </div>
             <div id="encodeStatus"></div>
         </div>
         
         <div class="section">
-            <h2>📱 Decode with Camera</h2>
+            <h2>Decode with Camera</h2>
             <div class="camera-controls">
-                <button id="startCamera" onclick="startCamera()">Start Camera</button>
-                <button id="stopCamera" onclick="stopCamera()" disabled>Stop Camera</button>
+                <button id="startCamera" onclick="startCamera()">Start</button>
+                <button id="stopCamera" onclick="stopCamera()" disabled>Stop</button>
             </div>
             <video id="cameraFeed" autoplay playsinline muted></video>
             <canvas id="decodingCanvas" width="400" height="400" class="hidden"></canvas>
@@ -248,15 +218,15 @@
         </div>
         
         <div class="section">
-            <h2>🖼️ Decode from Image File</h2>
+            <h2>Decode from File</h2>
             <input type="file" id="imageFile" accept="image/*" onchange="decodeFromFile()">
             <div class="canvas-container">
-                <canvas id="decodedCanvas" width="400" height="400" style="border-radius: 4px; max-width: 100%;"></canvas>
+                <canvas id="decodedCanvas" width="400" height="400"></canvas>
             </div>
         </div>
         
-        <div class="info">
-            <strong>Sacred Geometry Encoder:</strong> Creates beautiful minimalist patterns where information is encoded as precise geometric arrangements. Each black circle represents encoded data bits arranged in concentric rings.
+        <div class="style-info">
+            Creates hand-drawn style circular patterns where information is encoded in concentric rings with organic variations.
         </div>
     </div>
 
@@ -264,35 +234,31 @@
         let stream = null;
         let scanning = false;
         
-        // Sacred geometry SVG encoding system
-        class SacredGeometryEncoder {
+        class CircularCodeEncoder {
             constructor(size = 400) {
                 this.size = size;
                 this.center = size / 2;
-                this.maxRings = 18; // 18 rings for high capacity
-                this.bitsPerRing = 16; // 16 segments per ring
-                this.maxDataBits = this.maxRings * this.bitsPerRing; // 288 bits total
+                this.numRings = 8;
+                this.segmentsPerRing = [8, 12, 16, 20, 24, 28, 32, 36];
+                this.maxDataBits = this.segmentsPerRing.reduce((a, b) => a + b, 0);
             }
             
             textToBits(text) {
                 let bits = '';
-                // Add length header (8 bits)
+                
                 const length = Math.min(text.length, 50);
                 bits += length.toString(2).padStart(8, '0');
                 
-                // Add text data - each character is 8 bits (supports full ASCII)
                 for (let i = 0; i < length; i++) {
                     bits += text.charCodeAt(i).toString(2).padStart(8, '0');
                 }
                 
-                // Add checksum for error detection (8 bits)
                 let checksum = 0;
                 for (let i = 0; i < text.length; i++) {
                     checksum ^= text.charCodeAt(i);
                 }
                 bits += checksum.toString(2).padStart(8, '0');
                 
-                // Pad to fit our capacity
                 while (bits.length < this.maxDataBits) {
                     bits += '0';
                 }
@@ -302,79 +268,144 @@
             
             bitsToText(bits) {
                 try {
-                    console.log('=== DECODING PROCESS ===');
-                    console.log('Total bits received:', bits.length);
-                    
-                    // Extract length (first 8 bits)
                     const lengthBits = bits.substring(0, 8);
                     const length = parseInt(lengthBits, 2);
-                    console.log('Length bits:', lengthBits, '→ length:', length);
                     
                     if (length === 0 || length > 50) {
-                        console.log('❌ Invalid length:', length);
-                        console.log('Bit pattern analysis:');
-                        console.log('First 32 bits:', bits.substring(0, 32));
-                        console.log('Might be bit alignment issue...');
                         return null;
                     }
                     
                     let text = '';
-                    console.log('Decoding characters:');
-                    
-                    // Decode each character
                     for (let i = 0; i < length; i++) {
                         const start = 8 + (i * 8);
                         const end = start + 8;
                         
-                        if (end > bits.length) {
-                            console.log(`❌ Not enough bits for character ${i}`);
-                            break;
-                        }
+                        if (end > bits.length) break;
                         
                         const charBits = bits.substring(start, end);
                         const charCode = parseInt(charBits, 2);
-                        const char = String.fromCharCode(charCode);
                         
-                        console.log(`  Char ${i}: ${charBits} → ${charCode} → "${char}"`);
-                        
-                        // Validate character code
                         if (charCode < 32 || charCode > 126) {
-                            console.log(`❌ Invalid character code ${charCode} at position ${i}`);
-                            return text; // Return what we have so far
+                            return text;
                         }
                         
-                        text += char;
-                    }
-                    
-                    console.log('✅ Decoded text:', `"${text}"`);
-                    console.log('Text length:', text.length);
-                    
-                    // Check checksum if available
-                    const checksumStart = 8 + (length * 8);
-                    if (checksumStart + 8 <= bits.length) {
-                        const checksumBits = bits.substring(checksumStart, checksumStart + 8);
-                        const storedChecksum = parseInt(checksumBits, 2);
-                        
-                        let calculatedChecksum = 0;
-                        for (let i = 0; i < text.length; i++) {
-                            calculatedChecksum ^= text.charCodeAt(i);
-                        }
-                        
-                        console.log('Checksum bits:', checksumBits, '→', storedChecksum);
-                        console.log('Calculated checksum:', calculatedChecksum);
-                        
-                        if (storedChecksum === calculatedChecksum) {
-                            console.log('✅ Checksum valid');
-                        } else {
-                            console.log('⚠️ Checksum mismatch - possible corruption');
-                        }
+                        text += String.fromCharCode(charCode);
                     }
                     
                     return text;
                 } catch (e) {
-                    console.error('❌ Error in bitsToText:', e);
+                    console.error('Error decoding:', e);
                     return null;
                 }
+            }
+            
+            // Add hand-drawn wiggle to path
+            addWiggle(x, y, amplitude = 2) {
+                const wiggleX = x + (Math.random() - 0.5) * amplitude;
+                const wiggleY = y + (Math.random() - 0.5) * amplitude;
+                return { x: wiggleX, y: wiggleY };
+            }
+            
+            // Create a clean arc path
+            createArc(centerX, centerY, radius, startAngle, endAngle) {
+                const startX = centerX + radius * Math.cos(startAngle);
+                const startY = centerY + radius * Math.sin(startAngle);
+                const endX = centerX + radius * Math.cos(endAngle);
+                const endY = centerY + radius * Math.sin(endAngle);
+                
+                const largeArcFlag = endAngle - startAngle <= Math.PI ? "0" : "1";
+                
+                return `M ${startX} ${startY} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`;
+            }
+            
+            // Create a wiggly arc path
+            createWigglyArc(centerX, centerY, radius, startAngle, endAngle, wiggleAmount = 2) {
+                const steps = 20; // Number of points along the arc
+                let pathData = '';
+                
+                for (let i = 0; i <= steps; i++) {
+                    const t = i / steps;
+                    const angle = startAngle + (endAngle - startAngle) * t;
+                    const baseX = centerX + radius * Math.cos(angle);
+                    const baseY = centerY + radius * Math.sin(angle);
+                    
+                    // Add varying wiggle along the arc
+                    const wiggle = this.addWiggle(baseX, baseY, wiggleAmount * (1 + Math.random() * 0.5));
+                    
+                    if (i === 0) {
+                        pathData += `M ${wiggle.x} ${wiggle.y}`;
+                    } else {
+                        // Use quadratic curves for smoother hand-drawn effect
+                        const prevAngle = startAngle + (endAngle - startAngle) * ((i - 1) / steps);
+                        const prevX = centerX + radius * Math.cos(prevAngle);
+                        const prevY = centerY + radius * Math.sin(prevAngle);
+                        const controlWiggle = this.addWiggle((prevX + baseX) / 2, (prevY + baseY) / 2, wiggleAmount);
+                        pathData += ` Q ${controlWiggle.x} ${controlWiggle.y} ${wiggle.x} ${wiggle.y}`;
+                    }
+                }
+                
+                return pathData;
+            }
+            
+            generateSVG(text) {
+                const bits = this.textToBits(text);
+                
+                // Create SVG with distortion filter
+                let svg = `<svg width="${this.size}" height="${this.size}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${this.size} ${this.size}">`;
+                
+                // Define subtle wave distortion filter
+                svg += `
+                <defs>
+                    <filter id="distortion">
+                        <feTurbulence baseFrequency="0.02" numOctaves="3" seed="5" />
+                        <feDisplacementMap in="SourceGraphic" scale="3" />
+                    </filter>
+                </defs>`;
+                
+                // White background
+                svg += `<rect width="${this.size}" height="${this.size}" fill="white"/>`;
+                
+                // Group for all paths with distortion filter applied
+                svg += `<g filter="url(#distortion)">`;
+                
+                let bitIndex = 0;
+                
+                // Draw clean concentric rings
+                for (let ring = 0; ring < this.numRings; ring++) {
+                    const segments = this.segmentsPerRing[ring];
+                    const radius = 35 + (ring * 22);
+                    const strokeWidth = 8;
+                    
+                    for (let segment = 0; segment < segments; segment++) {
+                        const bit = bits[bitIndex] || '0';
+                        bitIndex++;
+                        
+                        if (bit === '1') {
+                            const startAngle = (segment / segments) * 2 * Math.PI - Math.PI / 2;
+                            const endAngle = ((segment + 0.85) / segments) * 2 * Math.PI - Math.PI / 2;
+                            
+                            // Create clean arc path
+                            const pathData = this.createArc(
+                                this.center, 
+                                this.center, 
+                                radius, 
+                                startAngle, 
+                                endAngle
+                            );
+                            
+                            // Black strokes - clean paths
+                            svg += `<path d="${pathData}" 
+                                    stroke="black" 
+                                    stroke-width="${strokeWidth}" 
+                                    fill="none" 
+                                    stroke-linecap="round"/>`;
+                        }
+                    }
+                }
+                
+                svg += `</g>`; // Close group
+                svg += '</svg>';
+                return svg;
             }
             
             decode(canvas) {
@@ -383,47 +414,31 @@
                 const data = imageData.data;
                 
                 let bits = '';
-                
-                // Calculate scaling factors
-                const scaleX = canvas.width / this.size;
-                const scaleY = canvas.height / this.size;
-                const scale = Math.min(scaleX, scaleY);
+                const scale = canvas.width / this.size;
                 const scaledCenter = { x: canvas.width / 2, y: canvas.height / 2 };
                 
-                console.log('=== DECODING ANALYSIS ===');
-                console.log('Canvas:', canvas.width, 'x', canvas.height, 'Scale:', scale);
+                let bitIndex = 0;
                 
-                // Sample each ring with updated spacing
-                for (let ring = 0; ring < this.maxRings; ring++) {
-                    const baseRadius = this.center - 15 - (ring * 10); // Match encoding spacing
-                    const radius = baseRadius * scale;
+                for (let ring = 0; ring < this.numRings; ring++) {
+                    const segments = this.segmentsPerRing[ring];
+                    const radius = (35 + (ring * 22)) * scale;
                     
-                    if (radius < 5 * scale) break;
-                    
-                    console.log(`Decoding Ring ${ring}: radius ${radius.toFixed(1)}`);
-                    
-                    for (let segment = 0; segment < this.bitsPerRing; segment++) {
-                        // Calculate the exact center angle for this segment
-                        const centerAngle = (segment + 0.5) / this.bitsPerRing * 2 * Math.PI;
-                        const x = Math.round(scaledCenter.x + Math.cos(centerAngle) * radius);
-                        const y = Math.round(scaledCenter.y + Math.sin(centerAngle) * radius);
+                    for (let segment = 0; segment < segments; segment++) {
+                        const angle = ((segment + 0.4) / segments) * 2 * Math.PI;
+                        const x = Math.round(scaledCenter.x + Math.cos(angle) * radius);
+                        const y = Math.round(scaledCenter.y + Math.sin(angle) * radius);
                         
-                        // Sample multiple nearby pixels to handle anti-aliasing
                         let totalBrightness = 0;
                         let samples = 0;
                         
-                        // Sample in a 3x3 area around the target point
-                        for (let dx = -1; dx <= 1; dx++) {
-                            for (let dy = -1; dy <= 1; dy++) {
+                        for (let dx = -3; dx <= 3; dx++) {
+                            for (let dy = -3; dy <= 3; dy++) {
                                 const sampleX = x + dx;
                                 const sampleY = y + dy;
                                 
                                 if (sampleX >= 0 && sampleX < canvas.width && sampleY >= 0 && sampleY < canvas.height) {
                                     const pixelIndex = (sampleY * canvas.width + sampleX) * 4;
-                                    const r = data[pixelIndex];
-                                    const g = data[pixelIndex + 1];
-                                    const b = data[pixelIndex + 2];
-                                    const brightness = (r + g + b) / 3;
+                                    const brightness = (data[pixelIndex] + data[pixelIndex + 1] + data[pixelIndex + 2]) / 3;
                                     totalBrightness += brightness;
                                     samples++;
                                 }
@@ -431,135 +446,16 @@
                         }
                         
                         const avgBrightness = samples > 0 ? totalBrightness / samples : 255;
-                        
-                        // More lenient threshold to handle anti-aliasing
-                        const bit = avgBrightness < 180 ? '1' : '0';
+                        const bit = avgBrightness < 128 ? '1' : '0';
                         bits += bit;
-                        
-                        // Log first ring details
-                        if (ring === 0) {
-                            console.log(`Ring ${ring}, Seg ${segment}: pos(${x},${y}), avgBrightness=${avgBrightness.toFixed(1)}, bit=${bit}`);
-                        }
                     }
                 }
-                
-                console.log('Total bits decoded:', bits.length);
-                console.log('First 64 bits:', bits.substring(0, 64));
                 
                 return this.bitsToText(bits);
             }
         }
         
-        const encoder = new SacredGeometryEncoder();
-        
-        // Function to create organic merged shapes (metaballs effect)
-        function drawMetaballCluster(ctx, positions, radius) {
-            if (positions.length === 0) return;
-            
-            // Calculate bounding box for the cluster
-            const minX = Math.min(...positions.map(p => p.x)) - radius - 2;
-            const maxX = Math.max(...positions.map(p => p.x)) + radius + 2;
-            const minY = Math.min(...positions.map(p => p.y)) - radius - 2;
-            const maxY = Math.max(...positions.map(p => p.y)) + radius + 2;
-            
-            // Create a path using marching squares algorithm simulation
-            ctx.fillStyle = 'black';
-            ctx.beginPath();
-            
-            // For small clusters, use simple convex hull with rounded corners
-            if (positions.length <= 4) {
-                drawSmoothHull(ctx, positions, radius);
-            } else {
-                // For larger clusters, draw individual circles with smooth connections
-                positions.forEach((pos, index) => {
-                    ctx.beginPath();
-                    ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
-                    ctx.fill();
-                });
-                
-                // Add smooth connections between nearby circles
-                positions.forEach(pos1 => {
-                    positions.forEach(pos2 => {
-                        if (pos1 === pos2) return;
-                        const distance = Math.sqrt((pos1.x - pos2.x)**2 + (pos1.y - pos2.y)**2);
-                        if (distance <= radius * 2.2) {
-                            drawSmoothConnection(ctx, pos1, pos2, radius);
-                        }
-                    });
-                });
-            }
-        }
-        
-        function drawSmoothHull(ctx, positions, radius) {
-            if (positions.length === 1) {
-                ctx.arc(positions[0].x, positions[0].y, radius, 0, 2 * Math.PI);
-                return;
-            }
-            
-            // Calculate center point
-            const centerX = positions.reduce((sum, p) => sum + p.x, 0) / positions.length;
-            const centerY = positions.reduce((sum, p) => sum + p.y, 0) / positions.length;
-            
-            // Sort positions by angle from center for smooth hull
-            const sorted = positions.slice().sort((a, b) => {
-                const angleA = Math.atan2(a.y - centerY, a.x - centerX);
-                const angleB = Math.atan2(b.y - centerY, b.x - centerX);
-                return angleA - angleB;
-            });
-            
-            // Draw smooth hull with rounded corners
-            const expandedRadius = radius + 2;
-            for (let i = 0; i < sorted.length; i++) {
-                const current = sorted[i];
-                const next = sorted[(i + 1) % sorted.length];
-                
-                // Calculate expanded points
-                const currentAngle = Math.atan2(current.y - centerY, current.x - centerX);
-                const expandedX = current.x + Math.cos(currentAngle) * expandedRadius;
-                const expandedY = current.y + Math.sin(currentAngle) * expandedRadius;
-                
-                if (i === 0) {
-                    ctx.moveTo(expandedX, expandedY);
-                } else {
-                    // Use quadratic curves for smooth connections
-                    const controlX = (expandedX + current.x) / 2;
-                    const controlY = (expandedY + current.y) / 2;
-                    ctx.quadraticCurveTo(controlX, controlY, expandedX, expandedY);
-                }
-            }
-            ctx.closePath();
-            ctx.fill();
-            
-            // Fill in the original circle positions to ensure coverage
-            positions.forEach(pos => {
-                ctx.beginPath();
-                ctx.arc(pos.x, pos.y, radius, 0, 2 * Math.PI);
-                ctx.fill();
-            });
-        }
-        
-        function drawSmoothConnection(ctx, pos1, pos2, radius) {
-            const distance = Math.sqrt((pos1.x - pos2.x)**2 + (pos1.y - pos2.y)**2);
-            if (distance <= 0) return;
-            
-            // Calculate perpendicular offset for smooth connection
-            const offsetRatio = Math.max(0, 1 - distance / (radius * 2));
-            const offset = radius * offsetRatio * 0.4; // Reduced for tighter connections
-            
-            const dx = pos2.x - pos1.x;
-            const dy = pos2.y - pos1.y;
-            const perpX = -dy / distance * offset;
-            const perpY = dx / distance * offset;
-            
-            // Draw smooth connecting shape
-            ctx.beginPath();
-            ctx.moveTo(pos1.x + perpX, pos1.y + perpY);
-            ctx.lineTo(pos2.x + perpX, pos2.y + perpY);
-            ctx.lineTo(pos2.x - perpX, pos2.y - perpY);
-            ctx.lineTo(pos1.x - perpX, pos1.y - perpY);
-            ctx.closePath();
-            ctx.fill();
-        }
+        const encoder = new CircularCodeEncoder();
         
         function encodeText() {
             const text = document.getElementById('textInput').value;
@@ -575,82 +471,25 @@
                 return;
             }
             
-            // Create encoder and get bits
-            const encoder = new SacredGeometryEncoder(size);
-            const bits = encoder.textToBits(text);
+            const customEncoder = new CircularCodeEncoder(size);
+            const svg = customEncoder.generateSVG(text);
             
-            // Create canvas for direct pixel manipulation
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
+            document.getElementById('svgOutput').innerHTML = svg;
+            window.currentSVG = svg;
             
-            // Fill with white background
-            ctx.fillStyle = 'white';
-            ctx.fillRect(0, 0, size, size);
-            
-            console.log('=== DIRECT CANVAS ENCODING ===');
-            console.log('Text:', text);
-            console.log('Bits:', bits);
-            console.log('Drawing black circles for 1-bits:');
-            
-            // Draw clean, simple circles for each 1-bit
-            let blackCircleCount = 0;
-            for (let ring = 0; ring < encoder.maxRings; ring++) {
-                const radius = encoder.center - 15 - (ring * 10);
-                if (radius < 5) break;
-                
-                for (let segment = 0; segment < encoder.bitsPerRing; segment++) {
-                    const bitIndex = ring * encoder.bitsPerRing + segment;
-                    const bit = bits[bitIndex] || '0';
-                    
-                    if (bit === '1') {
-                        const angle = (segment + 0.5) / encoder.bitsPerRing * 2 * Math.PI;
-                        const x = Math.round(encoder.center + Math.cos(angle) * radius);
-                        const y = Math.round(encoder.center + Math.sin(angle) * radius);
-                        
-                        // Draw clean, precise circles
-                        ctx.fillStyle = 'black';
-                        ctx.beginPath();
-                        ctx.arc(x, y, 4, 0, 2 * Math.PI);
-                        ctx.fill();
-                        blackCircleCount++;
-                        
-                        if (ring < 2) {
-                            console.log(`BLACK at Ring ${ring}, Seg ${segment}: pos(${x},${y})`);
-                        }
-                    }
-                }
-            }
-            
-            console.log(`Total black circles: ${blackCircleCount}`);
-            
-            // Convert canvas to data URL and create SVG that embeds the image
-            const dataUrl = canvas.toDataURL('image/png');
-            const svgContent = `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-                <image href="${dataUrl}" x="0" y="0" width="${size}" height="${size}"/>
-            </svg>`;
-            
-            // Display in SVG output
-            const svgOutput = document.getElementById('svgOutput');
-            svgOutput.innerHTML = svgContent;
-            
-            // Store for download
-            window.currentSVG = svgContent;
-            
-            showStatus('encodeStatus', `Encoded "${text}" successfully using direct canvas!`, 'success');
+            showStatus('encodeStatus', `Encoded: "${text}"`, 'success');
         }
         
         function downloadSVG() {
             if (!window.currentSVG) {
-                alert('Please encode some text first!');
+                alert('Please generate a code first');
                 return;
             }
             
             const blob = new Blob([window.currentSVG], { type: 'image/svg+xml' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
-            link.download = 'sacred-geometry-code.svg';
+            link.download = 'circular-code.svg';
             link.href = url;
             link.click();
             URL.revokeObjectURL(url);
@@ -658,18 +497,15 @@
         
         async function startCamera() {
             try {
-                // Stop any existing stream first
                 if (stream) {
                     stream.getTracks().forEach(track => track.stop());
                 }
                 
-                // Request camera with better mobile settings
                 const constraints = {
                     video: {
-                        facingMode: 'environment', // Back camera preferred
+                        facingMode: 'environment',
                         width: { ideal: 1280, max: 1920 },
-                        height: { ideal: 720, max: 1080 },
-                        frameRate: { ideal: 30, max: 60 }
+                        height: { ideal: 720, max: 1080 }
                     }
                 };
                 
@@ -678,7 +514,6 @@
                 const video = document.getElementById('cameraFeed');
                 video.srcObject = stream;
                 
-                // Wait for video to be ready
                 await new Promise((resolve) => {
                     video.onloadedmetadata = () => {
                         video.play();
@@ -689,9 +524,8 @@
                 document.getElementById('startCamera').disabled = true;
                 document.getElementById('stopCamera').disabled = false;
                 
-                showStatus('decodeStatus', 'Camera started. Point at a sacred geometry code...', 'info');
+                showStatus('decodeStatus', 'Camera active', 'info');
                 
-                // Start scanning with delay to ensure video is ready
                 setTimeout(() => {
                     scanning = true;
                     scanFrame();
@@ -699,7 +533,7 @@
                 
             } catch (err) {
                 console.error('Camera error:', err);
-                showStatus('decodeStatus', 'Camera access denied or not available. Please allow camera permissions.', 'error');
+                showStatus('decodeStatus', 'Camera access denied', 'error');
             }
         }
         
@@ -717,7 +551,7 @@
             document.getElementById('startCamera').disabled = false;
             document.getElementById('stopCamera').disabled = true;
             
-            showStatus('decodeStatus', 'Camera stopped', 'info');
+            showStatus('decodeStatus', '', 'info');
         }
         
         function scanFrame() {
@@ -728,54 +562,27 @@
             const ctx = canvas.getContext('2d');
             
             if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                // Use video dimensions for better quality
-                const videoWidth = video.videoWidth;
-                const videoHeight = video.videoHeight;
+                canvas.width = Math.min(video.videoWidth, 800);
+                canvas.height = Math.min(video.videoHeight, 600);
                 
-                if (videoWidth > 0 && videoHeight > 0) {
-                    // Set canvas to match video resolution
-                    canvas.width = Math.min(videoWidth, 800);
-                    canvas.height = Math.min(videoHeight, 600);
-                    
-                    // Draw current frame
-                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                    
-                    // Try multiple regions of the frame for better detection
-                    const regions = [
-                        { x: 0, y: 0, w: canvas.width, h: canvas.height }, // Full frame
-                        { x: canvas.width * 0.1, y: canvas.height * 0.1, w: canvas.width * 0.8, h: canvas.height * 0.8 }, // Center region
-                        { x: canvas.width * 0.25, y: canvas.height * 0.25, w: canvas.width * 0.5, h: canvas.height * 0.5 } // Smaller center
-                    ];
-                    
-                    for (const region of regions) {
-                        const testCanvas = document.createElement('canvas');
-                        const testCtx = testCanvas.getContext('2d');
-                        testCanvas.width = 400;
-                        testCanvas.height = 400;
-                        
-                        // Extract and resize region
-                        testCtx.drawImage(canvas, region.x, region.y, region.w, region.h, 0, 0, 400, 400);
-                        
-                        const result = encoder.decode(testCanvas);
-                        if (result && result.length > 0) {
-                            document.getElementById('decodedResult').innerHTML = 
-                                `<div class="decode-result"><strong>✅ Decoded:</strong><br>${result}</div>`;
-                            showStatus('decodeStatus', 'Successfully decoded!', 'success');
-                            
-                            // Flash the screen to indicate success
-                            video.style.filter = 'invert(1)';
-                            setTimeout(() => {
-                                video.style.filter = 'none';
-                            }, 200);
-                            
-                            break; // Found a result, no need to check other regions
-                        }
-                    }
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                const testCanvas = document.createElement('canvas');
+                const testCtx = testCanvas.getContext('2d');
+                testCanvas.width = 400;
+                testCanvas.height = 400;
+                
+                testCtx.drawImage(canvas, 0, 0, 400, 400);
+                
+                const result = encoder.decode(testCanvas);
+                if (result && result.length > 0) {
+                    document.getElementById('decodedResult').innerHTML = 
+                        `<div class="decode-result">Decoded: ${result}</div>`;
+                    showStatus('decodeStatus', 'Success', 'success');
                 }
             }
             
             if (scanning) {
-                // Use requestAnimationFrame for smooth scanning
                 requestAnimationFrame(scanFrame);
             }
         }
@@ -784,7 +591,7 @@
             const file = document.getElementById('imageFile').files[0];
             if (!file) return;
             
-            showStatus('decodeStatus', 'Processing image...', 'info');
+            showStatus('decodeStatus', 'Processing...', 'info');
             
             const reader = new FileReader();
             reader.onload = function(e) {
@@ -793,146 +600,25 @@
                     const canvas = document.getElementById('decodedCanvas');
                     const ctx = canvas.getContext('2d');
                     
-                    // Scale canvas for display
-                    const maxSize = window.innerWidth > 480 ? 400 : Math.min(window.innerWidth - 40, 300);
-                    canvas.width = maxSize;
-                    canvas.height = maxSize;
-                    canvas.style.width = maxSize + 'px';
-                    canvas.style.height = maxSize + 'px';
+                    canvas.width = 400;
+                    canvas.height = 400;
                     
-                    // Clear with white background
                     ctx.fillStyle = 'white';
-                    ctx.fillRect(0, 0, maxSize, maxSize);
+                    ctx.fillRect(0, 0, 400, 400);
+                    ctx.drawImage(img, 0, 0, 400, 400);
                     
-                    // Draw image to display canvas
-                    ctx.drawImage(img, 0, 0, maxSize, maxSize);
+                    const result = encoder.decode(canvas);
                     
-                    // Create a debug canvas with enhanced contrast
-                    const debugCanvas = document.createElement('canvas');
-                    const debugCtx = debugCanvas.getContext('2d');
-                    debugCanvas.width = 400;
-                    debugCanvas.height = 400;
-                    
-                    // Clear debug canvas with white
-                    debugCtx.fillStyle = 'white';
-                    debugCtx.fillRect(0, 0, 400, 400);
-                    
-                    // Draw image with no smoothing for crisp edges
-                    debugCtx.imageSmoothingEnabled = false;
-                    debugCtx.drawImage(img, 0, 0, 400, 400);
-                    
-                    // Apply contrast enhancement to eliminate anti-aliasing
-                    const imageData = debugCtx.getImageData(0, 0, 400, 400);
-                    const data = imageData.data;
-                    
-                    // Convert all pixels to pure black or white
-                    for (let i = 0; i < data.length; i += 4) {
-                        const brightness = (data[i] + data[i + 1] + data[i + 2]) / 3;
-                        const bw = brightness < 200 ? 0 : 255; // More aggressive threshold
-                        data[i] = bw;     // R
-                        data[i + 1] = bw; // G  
-                        data[i + 2] = bw; // B
-                        // Keep alpha as is
-                    }
-                    
-                    debugCtx.putImageData(imageData, 0, 0);
-                    
-                    // Now decode using the enhanced image
-                    const testEncoder = new SacredGeometryEncoder(400);
-                    
-                    console.log('=== ENHANCED SAMPLING ===');
-                    let sampledBits = '';
-                    
-                    // Get the processed image data
-                    const processedData = debugCtx.getImageData(0, 0, 400, 400).data;
-                    
-                    for (let ring = 0; ring < testEncoder.maxRings; ring++) {
-                        const radius = testEncoder.center - 15 - (ring * 10);
-                        if (radius < 5) {
-                            console.log(`Stopped at ring ${ring}, radius ${radius} too small`);
-                            break;
-                        }
-                        
-                        if (ring < 3) console.log(`Processing ring ${ring} at radius ${radius}`);
-                        
-                        for (let segment = 0; segment < testEncoder.bitsPerRing; segment++) {
-                            const angle = (segment + 0.5) / testEncoder.bitsPerRing * 2 * Math.PI;
-                            const x = Math.round(testEncoder.center + Math.cos(angle) * radius);
-                            const y = Math.round(testEncoder.center + Math.sin(angle) * radius);
-                            
-                            let bit = '0';
-                            if (x >= 0 && x < 400 && y >= 0 && y < 400) {
-                                const pixelIndex = (y * 400 + x) * 4;
-                                const r = processedData[pixelIndex];
-                                const g = processedData[pixelIndex + 1];
-                                const b = processedData[pixelIndex + 2];
-                                const brightness = (r + g + b) / 3;
-                                bit = brightness < 128 ? '1' : '0';
-                                
-                                if (ring === 0 || (ring < 3 && segment < 4)) {
-                                    console.log(`Ring ${ring}, Seg ${segment}: pos(${x},${y}), RGB(${r},${g},${b}), bit=${bit}`);
-                                }
-                            }
-                            sampledBits += bit;
-                        }
-                    }
-                    
-                    console.log('Total sampled bits:', sampledBits.length);
-                    console.log('Expected max bits:', testEncoder.maxDataBits);
-                    
-                    // Compare with original text encoding to check alignment
-                    const originalText = 'TR3BA7zXEhZb8kzz9H6BYGrudbdxwk7Rsk';
-                    const expectedBits = testEncoder.textToBits(originalText);
-                    console.log('Expected first 64 bits: ', expectedBits.substring(0, 64));
-                    console.log('Actual   first 64 bits: ', sampledBits.substring(0, 64));
-                    
-                    // Make sure we got enough bits
-                    if (sampledBits.length < testEncoder.maxDataBits) {
-                        console.log(`⚠️ Only got ${sampledBits.length} bits, expected ${testEncoder.maxDataBits}`);
-                        while (sampledBits.length < testEncoder.maxDataBits) {
-                            sampledBits += '0';
-                        }
-                    }
-                    
-                    console.log('Final bits ready for decode:', sampledBits.length);
-                    
-                    // Try decoding
-                    const result = testEncoder.bitsToText(sampledBits);
-                    
-                    // Display results
                     if (result && result.length > 0) {
                         document.getElementById('decodedResult').innerHTML = 
-                            `<div class="decode-result"><strong>✅ Decoded from file:</strong><br>${result}</div>`;
-                        showStatus('decodeStatus', 'File decoded successfully!', 'success');
+                            `<div class="decode-result">Decoded: ${result}</div>`;
+                        showStatus('decodeStatus', 'Success', 'success');
                     } else {
-                        document.getElementById('decodedResult').innerHTML = 
-                            `<div class="error">❌ Could not decode image. Check console for bit comparison.</div>`;
-                        showStatus('decodeStatus', 'Decoding failed. Check console for details.', 'error');
+                        showStatus('decodeStatus', 'Could not decode', 'error');
                     }
                 };
                 
-                img.onerror = function() {
-                    showStatus('decodeStatus', 'Error loading image file', 'error');
-                };
-                
-                // Handle both SVG and raster images
-                if (file.type === 'image/svg+xml') {
-                    // For SVG files, read as text first
-                    const svgReader = new FileReader();
-                    svgReader.onload = function(svgEvent) {
-                        const svgText = svgEvent.target.result;
-                        const blob = new Blob([svgText], {type: 'image/svg+xml'});
-                        const url = URL.createObjectURL(blob);
-                        img.src = url;
-                    };
-                    svgReader.readAsText(file);
-                } else {
-                    img.src = e.target.result;
-                }
-            };
-            
-            reader.onerror = function() {
-                showStatus('decodeStatus', 'Error reading file', 'error');
+                img.src = e.target.result;
             };
             
             reader.readAsDataURL(file);
@@ -940,7 +626,11 @@
         
         function showStatus(elementId, message, type) {
             const element = document.getElementById(elementId);
-            element.innerHTML = `<div class="${type}">${message}</div>`;
+            if (message) {
+                element.innerHTML = `<div class="status ${type}">${message}</div>`;
+            } else {
+                element.innerHTML = '';
+            }
             
             if (type === 'success' || type === 'error') {
                 setTimeout(() => {
@@ -949,9 +639,9 @@
             }
         }
         
-        // Initialize with example string
+        // Initialize with example
         window.onload = function() {
-            document.getElementById('textInput').value = 'TR3BA7zXEhZb8kzz9H6BYGrudbdxwk7Rsk';
+            document.getElementById('textInput').value = 'Hello World';
             encodeText();
         };
     </script>
